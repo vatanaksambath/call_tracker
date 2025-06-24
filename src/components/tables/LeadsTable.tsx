@@ -32,7 +32,7 @@ const tableData: Order[] = [
     user: {
       image: "/images/user/user-17.jpg",
       name: "Lindsey Curtis",
-      role: "Web Designer",
+      role: "Team Manager",
     },
     projectName: "Agency Website",
     team: {
@@ -50,7 +50,7 @@ const tableData: Order[] = [
     user: {
       image: "/images/user/user-18.jpg",
       name: "Kaiya George",
-      role: "Project Manager",
+      role: "Retailer",
     },
     projectName: "Technology",
     team: {
@@ -64,7 +64,7 @@ const tableData: Order[] = [
     user: {
       image: "/images/user/user-17.jpg",
       name: "Zain Geidt",
-      role: "Content Writing",
+      role: "Banker",
     },
     projectName: "Blog Writing",
     team: {
@@ -124,31 +124,37 @@ export default function LeadsTable() {
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  User
+                  Lead Full Name
                 </TableCell>
                 <TableCell
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  Project Name
+                  Gender
                 </TableCell>
                 <TableCell
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  Team
+                  Phone Number
                 </TableCell>
                 <TableCell
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  Status
+                  Date of Birth
                 </TableCell>
                 <TableCell
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  Budget
+                  Date Registered
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                >
+                  Email
                 </TableCell>
               </TableRow>
             </TableHeader>
@@ -205,12 +211,15 @@ export default function LeadsTable() {
                         order.status === "Active"
                           ? "success"
                           : order.status === "Pending"
-                          ? "warning"
-                          : "error"
+                            ? "warning"
+                            : "error"
                       }
                     >
                       {order.status}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    {order.budget}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                     {order.budget}

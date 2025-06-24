@@ -18,6 +18,7 @@ import TextArea from "@/components/form/input/TextArea";
 import CheckboxComponents from "@/components/form/form-elements/CheckboxComponents";
 import DefaultModal from "@/components/example/ModalExample/DefaultModal";
 import ModalBasedAlerts from "@/components/example/ModalExample/ModalBasedAlerts";
+import FileInput from "@/components/form/input/FileInput";
 
 // export const metadata: Metadata = {
 //   title: "Next.js Basic Table | TailAdmin - Next.js Dashboard Template",
@@ -139,6 +140,52 @@ export default function SiteVisitTables() {
             <div className="custom-scrollbar h-[450px] overflow-y-auto px-2 pb-3">
               <div className="space-y-7">
                 <div>
+                  <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
+                    General Information
+                  </h5>
+                  <div>
+                    <Label htmlFor="tm">Select a lead</Label>
+                    <div className="relative">
+                      <Input
+                        type="text"
+                        disabled
+                        placeholder="Select a lead"
+                        className="pl-[62px]"
+                      />
+                      <span className="absolute left-0 top-1/2 flex h-11 w-[46px] -translate-y-1/2 items-center justify-center border-r border-gray-200 dark:border-gray-800">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M11 4C7.68629 4 5 6.68629 5 10C5 13.3137 7.68629 16 11 16C12.6569 16 14.1566 15.3679 15.3124 14.3126C16.3711 13.2596 17 11.7783 17 10C17 6.68629 14.3137 4 11 4Z"
+                            stroke="#000000"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                          <line
+                            x1="15.5"
+                            y1="15.5"
+                            x2="20"
+                            y2="20"
+                            stroke="#000000"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                          />
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+
+                </div>
+                <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
+                  Location Information
+                </h5>
+                <div>
                   <Label>Select City</Label>
                   <div className="relative">
                     <Select
@@ -198,7 +245,9 @@ export default function SiteVisitTables() {
                     </span>
                   </div>
                 </div>
-
+                <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
+                  Date & TIme
+                </h5>
                 <div>
                   <DatePicker
                     id="date-picker"
@@ -212,7 +261,7 @@ export default function SiteVisitTables() {
                 </div>
 
                 <div>
-                  <Label htmlFor="tm">Time Picker Input</Label>
+                  <Label htmlFor="tm">Start Time</Label>
                   <div className="relative">
                     <Input
                       type="time"
@@ -227,6 +276,31 @@ export default function SiteVisitTables() {
                 </div>
 
                 <div>
+                  <Label htmlFor="tm">End Time</Label>
+                  <div className="relative">
+                    <Input
+                      type="time"
+                      id="tm"
+                      name="tm"
+                      onChange={(e) => console.log(e.target.value)}
+                    />
+                    <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
+                      <TimeIcon />
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <DatePicker
+                    id="date-picker"
+                    label="Follow up Date"
+                    placeholder="Select a date"
+                    onChange={(dates, currentDateString) => {
+                      // Handle your logic
+                      console.log({ dates, currentDateString });
+                    }}
+                  />
+                </div>
+                <div>
                   <Label>Site Visit Description</Label>
                   <TextArea
                     value={message}
@@ -237,18 +311,35 @@ export default function SiteVisitTables() {
 
               </div>
 
-              <div>
+              {/* <div>
                 <DropzoneComponent />
-              </div>
+              </div> */}
             </div>
-            <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
+
+            <div className="flex items-center gap-3 mt-6 modal-footer sm:justify-end">
+              <button
+                onClick={closeModal}
+                type="button"
+                className="flex w-full justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] sm:w-auto"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                className="btn btn-success btn-update-event flex w-full justify-center rounded-lg bg-brand-500 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-600 sm:w-auto"
+                onClick={handleSave}
+              >
+                Save Changes
+              </button>
+            </div>
+            {/* <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
               <Button size="sm" variant="outline" onClick={closeModal}>
                 Close
               </Button>
               <Button size="sm" onClick={handleSave}>
                 Save Changes
               </Button>
-            </div>
+            </div> */}
           </form>
         </div>
       </Modal>

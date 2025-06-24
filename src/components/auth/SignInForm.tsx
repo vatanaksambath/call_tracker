@@ -130,11 +130,11 @@ export default function SignInForm() {
                   </Link>
                 </div>
                 <div>
-                  <Link href="/" passHref>
+                  {/* <Link href="/" passHref> */}
                     <Button className="w-full" size="sm">
                       Sign in
                     </Button>
-                  </Link>
+                  {/* </Link> */}
                 </div>
               </div>
             </form>
