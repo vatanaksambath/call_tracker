@@ -53,13 +53,9 @@ export default function SignInForm() {
       setToken(storedToken);
       const decodedUser = decode(storedToken);
       setUser(decodedUser);
-      if (currentPathname !== '/call_log' && currentPathname !== '/login') {
-          router.push('/call_log');
-      }
+      router.push('/');
     } else {
-      if (currentPathname !== '/login' && currentPathname !== '/') {
-        router.push('/');
-      }
+        router.push('/signin');
     }
   }, [token, router, currentPathname]);
 
@@ -101,7 +97,7 @@ export default function SignInForm() {
         setToken(receivedToken);
         setUser(decode(receivedToken));
 
-        router.push('/call_log');
+        router.push('/');
       } else {
         setLoginError(message || 'Login successful, but no token received from API.');
       }
