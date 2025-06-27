@@ -35,6 +35,11 @@ export default function SiteVisitTables() {
     closeModal();
   };
 
+  const breadcrumbs = [
+    { name: "Home", href: "/" },
+    { name: "Lead", href: "/sitevisit-tables" }
+  ];
+
   const optionsCity = [
     { value: "Phnom_Penh", label: "Phnom Penh" },
     { value: "Kampot", label: "Kampot" },
@@ -58,7 +63,7 @@ export default function SiteVisitTables() {
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Site Visit Table" />
+      <PageBreadcrumb crumbs={breadcrumbs} />
 
       <div className="space-y-6">
         <ComponentCard title="Site Visit Table">

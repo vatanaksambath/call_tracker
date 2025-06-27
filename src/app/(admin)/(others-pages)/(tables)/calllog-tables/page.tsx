@@ -10,13 +10,6 @@ import Label from "@/components/form/Label";
 import { useModal } from "@/hooks/useModal";
 import { Modal } from "@/components/ui/modal";
 
-// export const metadata: Metadata = {
-//   title: "Next.js Basic Table | TailAdmin - Next.js Dashboard Template",
-//   description:
-//     "This is Next.js Basic Table  page for TailAdmin  Tailwind CSS Admin Dashboard Template",
-//   // other metadata
-// };
-
 export default function CallLogTables() {
     const { isOpen, openModal, closeModal } = useModal();
     const handleSave = () => {
@@ -24,9 +17,15 @@ export default function CallLogTables() {
       console.log("Saving changes...");
       closeModal();
     };
+  
+  const breadcrumbs = [
+        { name: "Home", href: "/" },
+        { name: "Lead", href: "/calllog-tables" }
+    ];
+    
   return (
     <div>
-      <PageBreadcrumb pageTitle="Call Log Table" />
+      <PageBreadcrumb crumbs={breadcrumbs} />
       <div className="space-y-6">
         <ComponentCard title="Call Log Table">
           <div className="flex items-center gap-3">

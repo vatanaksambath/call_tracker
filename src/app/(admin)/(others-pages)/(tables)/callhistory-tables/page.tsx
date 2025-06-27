@@ -11,10 +11,15 @@ export const metadata: Metadata = {
   // other metadata
 };
 
+const breadcrumbs = [
+        { name: "Home", href: "/" },
+        { name: "Lead", href: "/calllog-tables" }
+    ];
+
 export default function CallHistoryTables() {
   return (
     <div>
-      <PageBreadcrumb pageTitle="Call History Table" />
+      <PageBreadcrumb crumbs={breadcrumbs} />
       <div className="space-y-6">
         <ComponentCard title="Call History Table">
           <CallHistoryTable />

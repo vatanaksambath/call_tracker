@@ -11,10 +11,15 @@ export const metadata: Metadata = {
   // other metadata
 };
 
+const breadcrumbs = [
+        { name: "Home", href: "/" },
+        { name: "Lead", href: "/basic-tables" }
+    ];
+
 export default function BasicTables() {
   return (
     <div>
-      <PageBreadcrumb pageTitle="Basic Table" />
+      <PageBreadcrumb crumbs={breadcrumbs} />
       <div className="space-y-6">
         <ComponentCard title="Basic Table 1">
           <BasicTableOne />
