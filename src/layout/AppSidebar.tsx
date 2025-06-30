@@ -53,7 +53,7 @@ const navItems: NavItem[] = [
     subItems: [
       // { name: "Basic Table", path: "/basic-tables", pro: false },
       { name: "Site Visit", path: "/sitevisit-tables", pro: false },
-      { name: "Leads List", path: "/leads-tables", pro: false }, 
+      { name: "Leads List", path: "/lead", pro: false }, 
       { name: "Call List", path: "/calllog-tables", pro: false }, 
       { name: "Call History", path: "/callhistory-tables", pro: false }
       ],

@@ -15,7 +15,7 @@ import Link from "next/link";
 // };
 const breadcrumbs = [
     { name: "Home", href: "/" },
-    { name: "Lead", href: "/leads-tables" }
+    { name: "Lead", href: "/lead" }
   ];
 
 export default function LeadsPage() {
@@ -25,7 +25,7 @@ export default function LeadsPage() {
       <div className="space-y-6">
         <ComponentCard title="Leads">
           <div className="flex items-center gap-3">
-            <Link href="/leads-tables/create">
+            <Link href="/lead/create">
               <Button size="md" variant="primary">
                 Add Lead +
               </Button>

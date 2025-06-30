@@ -14,6 +14,7 @@ import TextArea from "@/components/form/input/TextArea";
 import { EnvelopeIcon, ChevronDownIcon } from "@/icons";
 import axios from "axios";
 import Address, { IAddress } from "@/components/form/Address";
+import ContactInfo, { IContactChannel } from "@/components/form/ContactInfo";
 
 interface SelectOption {
     value: string;
@@ -25,7 +26,7 @@ export default function CreateLeadPage() {
 
   const breadcrumbs = [
     { name: "Home", href: "/" },
-    { name: "Lead", href: "/leads-tables" },
+    { name: "Lead", href: "/lead" },
     { name: "Create" },
   ];
 
@@ -46,12 +47,13 @@ export default function CreateLeadPage() {
         homeAddress: "", streetAddress: ""
     } as IAddress,
     remark: "",
+    contacts: [] as IContactChannel[], 
   });
 
   type LeadFormErrors = {
     firstName?: string; lastName?: string; gender?: string; dob?: string; email?: string;
     phone?: string; occupation?: string; leadSource?: string; contactDate?: string; customerType?: string;
-    business?: string; address?: string; remark?: string;
+    business?: string; address?: string; remark?: string; contacts?: string;
   };
 
   const [errors, setErrors] = useState<LeadFormErrors>({});
@@ -59,15 +61,17 @@ export default function CreateLeadPage() {
   const [businessOptions, setBusinessOptions] = useState<SelectOption[]>([]);
   const [leadSourceOptions, setLeadSourceOptions] = useState<SelectOption[]>([]);
   const [customerTypeOptions, setCustomerTypeOptions] = useState<SelectOption[]>([]);
+  const [channelTypeOptions, setChannelTypeOptions] = useState<SelectOption[]>([]);
 
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
-        const [gender, business, leadSource, customerType] = await Promise.all([
+        const [gender, business, leadSource, customerType, channelType] = await Promise.all([
           api.get('common/gender'),
           api.get('common/business'),
           api.get('lead-source/lead-source'),
-          api.get('customer-type/customer-type')
+          api.get('customer-type/customer-type'),
+          api.get('channel-type/channel-type')
         ]);
 
         const formattedGenders = gender.data.map((item: any) => ({
@@ -90,10 +94,16 @@ export default function CreateLeadPage() {
             label: item.customer_type_name
         }));
 
+        const formattedChannelTypes = channelType.data.map((item: any) => ({
+          value: String(item.channel_type_id),
+          label: item.channel_type_name
+        }));
+
         setGenderOptions(formattedGenders);
         setBusinessOptions(formattedBusinesses);
         setLeadSourceOptions(formattedLeadSources);
         setCustomerTypeOptions(formattedCustomerTypes);
+        setChannelTypeOptions(formattedChannelTypes)
 
       } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -136,6 +146,18 @@ export default function CreateLeadPage() {
     if (!formData.address.province) {
         newErrors.address = "A complete address with province is required.";
     }
+   // --- UPDATED: Validation for the nested contact structure ---
+  //  if (formData.contacts.length === 0 || !formData.contacts.some(c => c.contact_values.length > 0)) {
+  //   newErrors.contacts = "At least one contact is required.";
+  // } else {
+  //     const isInvalid = formData.contacts.some(c => 
+  //         !c.channel_type || c.contact_values.some(v => !v.contact_number.trim())
+  //     );
+  //     if (isInvalid) {
+  //         newErrors.contacts = "Each contact group must have a channel and each contact must have a number/ID.";
+  //     }
+  // }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -143,7 +165,7 @@ export default function CreateLeadPage() {
   const handleSave = () => { 
     if (validate()) {} 
   };
-  const handleCancel = () => { router.push("/leads-tables"); };
+  const handleCancel = () => { router.push("/lead"); };
 
   const countries = [ { code: "KH", label: "+855" }, { code: "US", label: "+1" }];
 
@@ -236,13 +258,21 @@ export default function CreateLeadPage() {
                   </div>
 
                    <div className="col-span-2 lg:col-span-1">
-                    <Address 
-                      value={formData.address}
-                      onSave={(newAddress) => handleChange('address', newAddress) }
-                      error={errors.address}
-                    />
+                      <Address 
+                        value={formData.address}
+                        onSave={(newAddress) => handleChange('address', newAddress) }
+                        error={errors.address}
+                      />
                   </div>
 
+                  <div className="col-span-2 lg:col-span-1">
+                    <ContactInfo 
+                        value={formData.contacts}
+                        onChange={(newContacts) => handleChange('contacts', newContacts)}
+                        error={errors.contacts}
+                    />
+                  </div>
+                  
                   <div className="col-span-3">
                     <Label>Remark</Label>
                     <TextArea value={formData.remark} onChange={(value) => handleChange("remark", value)} rows={3} />
