@@ -6,7 +6,7 @@ import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import { PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import api from "@/lib/api";
-import formatApiDataForSelect from "@/lib/utils";
+import formatApiDataForSelect from "@/lib/utils"; 
 
 // A single contact detail (e.g., one phone number)
 export interface IContactValue {
@@ -35,23 +35,38 @@ interface ContactInfoProps {
     error?: string;
 }
 
-// --- NEW: Toggle Switch Component ---
-const ToggleSwitch = ({ checked, onChange }: { checked: boolean, onChange: () => void }) => (
-    <button
-        type="button"
-        onClick={onChange}
-        className={`${
-            checked ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
-        } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
-    >
-        <span
-            className={`${
-                checked ? 'translate-x-6' : 'translate-x-1'
-            } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-        />
-    </button>
-);
+// --- NEW: Segmented button component for Primary status ---
+const PrimarySegmentedControl = ({ isPrimary, onSetPrimary }: { isPrimary: boolean; onSetPrimary: () => void; }) => {
+    const baseClasses = "w-1/2 px-3 py-2.5 text-sm font-medium transition-colors duration-200 focus:outline-none";
+    
+    const primaryClasses = isPrimary
+        ? "bg-blue-600 text-white"
+        : "bg-white dark:bg-dark-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100";
 
+    const notPrimaryClasses = !isPrimary
+        ? "bg-red-500 text-white"
+        : "bg-white dark:bg-dark-700 text-gray-600 dark:text-gray-300";
+
+    return (
+        <div className="flex w-full rounded-md border border-gray-300 dark:border-gray-600 overflow-hidden">
+            <button
+                type="button"
+                onClick={onSetPrimary}
+                disabled={isPrimary}
+                className={`${baseClasses} rounded-l-md ${primaryClasses} disabled:cursor-not-allowed`}
+            >
+                Primary
+            </button>
+            <div className="border-l border-gray-300 dark:border-gray-600"></div>
+            <button
+                type="button"
+                className={`${baseClasses} rounded-r-md ${notPrimaryClasses} cursor-default`}
+            >
+                Not Primary
+            </button>
+        </div>
+    );
+};
 
 export default function ContactInfo({ value, onChange, error }: ContactInfoProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -159,8 +174,8 @@ export default function ContactInfo({ value, onChange, error }: ContactInfoProps
             {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
 
             {isModalOpen && (
-                <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-dark-900 p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+                <div className="fixed inset-0 bg-grey/10 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-dark-900 p-6 rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col">
                         <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
                             <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Contact Information</h2>
                             <Button size="sm" type="button" onClick={addChannel} className="flex items-center gap-2">
@@ -181,12 +196,8 @@ export default function ContactInfo({ value, onChange, error }: ContactInfoProps
                                     </div>
                                     <div className="space-y-4">
                                         {channel.contact_values.map((contact, valueIndex) => (
-                                            <div key={contact.id} className="flex items-center gap-3">
-                                                <div className="flex flex-col items-center">
-                                                    <Label className="text-xs text-gray-500 mb-1">Primary</Label>
-                                                    <ToggleSwitch checked={contact.is_primary} onChange={() => setAsPrimary(channelIndex, valueIndex)} />
-                                                </div>
-                                                <div className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-3">
+                                            <div key={contact.id} className="flex items-end p-3 rounded-md bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700">
+                                                <div className="flex-grow grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">                                                   
                                                     <div>
                                                         <Label className="text-xs text-gray-500">Username</Label>
                                                         <Input placeholder="Optional" value={contact.user_name} onChange={e => handleValueChange(channelIndex, valueIndex, 'user_name', e.target.value)} />
@@ -199,8 +210,12 @@ export default function ContactInfo({ value, onChange, error }: ContactInfoProps
                                                         <Label className="text-xs text-gray-500">Remark</Label>
                                                         <Input placeholder="e.g., Work" value={contact.remark} onChange={e => handleValueChange(channelIndex, valueIndex, 'remark', e.target.value)} />
                                                     </div>
+                                                    <div>
+                                                        <Label className="text-xs text-gray-500">Status</Label>
+                                                        <PrimarySegmentedControl isPrimary={contact.is_primary} onSetPrimary={() => setAsPrimary(channelIndex, valueIndex)} />
+                                                    </div>
                                                 </div>
-                                                <div className="pt-5">
+                                                <div className="flex-shrink-0">
                                                     {channel.contact_values.length > 1 && (
                                                         <Button variant="ghost" size="icon" type="button" onClick={() => removeContactValue(channelIndex, valueIndex)}>
                                                             <TrashIcon className="h-5 w-5 text-gray-400 hover:text-red-500 transition-colors" />
@@ -211,13 +226,10 @@ export default function ContactInfo({ value, onChange, error }: ContactInfoProps
                                         ))}
                                     </div>
                                     <div className="mt-4 flex justify-end">
-                                        <Button size="sm" variant="outline" type="button" onClick={() => addContactValue(channelIndex)} className="flex items-center gap-1">
-                                            <PlusIcon className="h-3 w-3"/>
+                                        <Button size="xs" variant="ghost" type="button" onClick={() => addContactValue(channelIndex)} className="flex items-center gap-1 text-blue-600 hover:text-blue-700">
+                                            <PlusIcon className="h-4 w-4"/>
                                             Add Contact
                                         </Button>
-                                        <div className="pt-5">
-                                        
-                                        </div>
                                     </div>
                                 </div>
                             ))}
