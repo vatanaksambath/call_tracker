@@ -8,18 +8,16 @@ import { PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import api from "@/lib/api";
 import formatApiDataForSelect from "@/lib/utils"; 
 
-// A single contact detail (e.g., one phone number)
 export interface IContactValue {
-    id: number; // For React key
+    id: number;
     user_name: string;
     contact_number: string;
     remark: string;
     is_primary: boolean;
 }
 
-// A group of contacts for a specific channel type
 export interface IContactChannel {
-    id: number; // For React key
+    id: number;
     channel_type: ISelectOption | null;
     contact_values: IContactValue[];
 }
@@ -35,7 +33,6 @@ interface ContactInfoProps {
     error?: string;
 }
 
-// --- NEW: Segmented button component for Primary status ---
 const PrimarySegmentedControl = ({ isPrimary, onSetPrimary }: { isPrimary: boolean; onSetPrimary: () => void; }) => {
     const baseClasses = "w-1/2 px-3 py-2.5 text-sm font-medium transition-colors duration-200 focus:outline-none";
     
