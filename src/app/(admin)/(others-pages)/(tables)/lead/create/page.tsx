@@ -42,18 +42,18 @@ export default function CreateLeadPage() {
     contactDate: null as Date | null,
     customerType: null as SelectOption | null,
     business: null as SelectOption | null,
-    address: { // New address object
+    address: {
         province: null, district: null, commune: null, village: null,
         homeAddress: "", streetAddress: ""
     } as IAddress,
     remark: "",
-    contacts: [] as IContactChannel[], 
+    contact_data: [] as IContactChannel[], 
   });
 
   type LeadFormErrors = {
     firstName?: string; lastName?: string; gender?: string; dob?: string; email?: string;
     phone?: string; occupation?: string; leadSource?: string; contactDate?: string; customerType?: string;
-    business?: string; address?: string; remark?: string; contacts?: string;
+    business?: string; address?: string; remark?: string; contact_data?: string;
   };
 
   const [errors, setErrors] = useState<LeadFormErrors>({});
@@ -61,7 +61,6 @@ export default function CreateLeadPage() {
   const [businessOptions, setBusinessOptions] = useState<SelectOption[]>([]);
   const [leadSourceOptions, setLeadSourceOptions] = useState<SelectOption[]>([]);
   const [customerTypeOptions, setCustomerTypeOptions] = useState<SelectOption[]>([]);
-  const [channelTypeOptions, setChannelTypeOptions] = useState<SelectOption[]>([]);
 
   useEffect(() => {
     const fetchDropdownData = async () => {
@@ -103,7 +102,6 @@ export default function CreateLeadPage() {
         setBusinessOptions(formattedBusinesses);
         setLeadSourceOptions(formattedLeadSources);
         setCustomerTypeOptions(formattedCustomerTypes);
-        setChannelTypeOptions(formattedChannelTypes)
 
       } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -146,18 +144,17 @@ export default function CreateLeadPage() {
     if (!formData.address.province) {
         newErrors.address = "A complete address with province is required.";
     }
-  //  --- UPDATED: Validation for the nested contact structure ---
-   if (formData.contacts.length === 0 || !formData.contacts.some(c => c.contact_values.length > 0)) {
-    newErrors.contacts = "Contact is required.";
-  } else {
-      const isInvalid = formData.contacts.some(c => 
-          !c.channel_type || c.contact_values.some(v => !v.contact_number.trim())
-      );
-      if (isInvalid) {
-          newErrors.contacts = "Each contact group must have a channel and each contact must have a number/ID.";
-      }
-  }
-
+    if (formData.contact_data.length === 0 || !formData.contact_data.some(c => c.contact_values.length > 0)) {
+    newErrors.contact_data = "Contact is required.";
+    } else {
+        const isInvalid = formData.contact_data.some(c => 
+            !c.channel_type || c.contact_values.some(v => !v.contact_number.trim())
+        );
+        if (isInvalid) {
+            newErrors.contact_data = "Each contact group must have a channel and each contact must have a number/ID.";
+        }
+    }
+    console.log(formData);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -221,9 +218,9 @@ export default function CreateLeadPage() {
 
                   <div className="col-span-2 lg:col-span-1">
                     <ContactInfo 
-                        value={formData.contacts}
-                        onChange={(newContacts) => handleChange('contacts', newContacts)}
-                        error={errors.contacts}
+                        value={formData.contact_data}
+                        onChange={(newcontact_data) => handleChange('contact_data', newcontact_data)}
+                        error={errors.contact_data}
                     />
                   </div>
 

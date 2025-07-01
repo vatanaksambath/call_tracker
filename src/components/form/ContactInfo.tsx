@@ -228,7 +228,7 @@ export default function ContactInfo({ value, onChange, error }: ContactInfoProps
 
             {isModalOpen && (
                 <div className="fixed inset-0 bg-grey/10 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-dark-900 p-6 rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col">
+                    <div className="bg-white dark:bg-dark-900 p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[75vh] flex flex-col">
                         <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
                             <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Contact Information</h2>
                             <Button size="sm" type="button" onClick={addChannel} className="flex items-center gap-2">
