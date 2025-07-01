@@ -10,7 +10,7 @@ import {
 import Badge from "../ui/badge/Badge";
 import Image from "next/image";
 import { 
-    EyeIcon, PencilIcon, TrashIcon, EllipsisVerticalIcon, 
+    EyeIcon, PencilIcon, TrashIcon, EllipsisHorizontalIcon, 
     AdjustmentsHorizontalIcon, XMarkIcon, ChevronLeftIcon, 
     ChevronRightIcon, DocumentMagnifyingGlassIcon, UserCircleIcon, 
     CakeIcon, PhoneIcon, EnvelopeIcon, BriefcaseIcon, MapPinIcon, 
@@ -97,7 +97,7 @@ const ActionMenu = ({ lead, onSelect }: { lead: Lead; onSelect: (action: 'view' 
     return (
         <div className="relative" ref={menuRef}>
             <button onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors">
-                <EllipsisVerticalIcon className="h-5 w-5 text-gray-500" />
+                <EllipsisHorizontalIcon className="h-5 w-5 text-gray-500" />
             </button>
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-dark-800 border border-gray-200 dark:border-white/[0.05] rounded-lg shadow-lg z-10">
