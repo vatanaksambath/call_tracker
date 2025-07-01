@@ -9,7 +9,7 @@ import {
 } from "../ui/table";
 import Badge from "../ui/badge/Badge";
 import Image from "next/image";
-import { EyeIcon, PencilIcon, TrashIcon, EllipsisHorizontalIcon, AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, PencilIcon, TrashIcon, EllipsisHorizontalIcon, AdjustmentsHorizontalIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import Button from "../ui/button/Button";
 
 interface Lead {
@@ -93,7 +93,7 @@ const allColumns: { key: keyof Lead; label: string }[] = [
     { key: 'status', label: 'Status' },
 ];
 
-const ActionMenu = ({ leadId }: { leadId: number }) => {
+const ActionMenu = ({ lead, onSelect }: { lead: Lead; onSelect: (action: 'view' | 'edit' | 'delete', lead: Lead) => void; }) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -113,9 +113,9 @@ const ActionMenu = ({ leadId }: { leadId: number }) => {
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-dark-800 border border-gray-200 dark:border-white/[0.05] rounded-lg shadow-lg z-10">
                     <ul className="py-1">
-                        <li><a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.05]"><EyeIcon className="h-4 w-4"/> View</a></li>
-                        <li><a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.05]"><PencilIcon className="h-4 w-4"/> Edit</a></li>
-                        <li><a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-white/[0.05]"><TrashIcon className="h-4 w-4"/> Delete</a></li>
+                        <li><a href="#" onClick={(e) => { e.preventDefault(); onSelect('view', lead); setIsOpen(false); }} className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.05]"><EyeIcon className="h-4 w-4"/> View</a></li>
+                        <li><a href="#" onClick={(e) => { e.preventDefault(); onSelect('edit', lead); setIsOpen(false); }} className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.05]"><PencilIcon className="h-4 w-4"/> Edit</a></li>
+                        <li><a href="#" onClick={(e) => { e.preventDefault(); onSelect('delete', lead); setIsOpen(false); }} className="flex items-center gap-3 px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-white/[0.05]"><TrashIcon className="h-4 w-4"/> Delete</a></li>
                     </ul>
                 </div>
             )}
@@ -173,6 +173,48 @@ const ColumnSelector = ({ visibleColumns, setVisibleColumns }: { visibleColumns:
     );
 };
 
+const ViewLeadModal = ({ lead, onClose }: { lead: Lead | null; onClose: () => void; }) => {
+    if (!lead) return null;
+
+    return (
+        <div className="fixed inset-0 bg-grey/10 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-dark-900 p-6 rounded-lg shadow-xl w-full max-w-2xl">
+                <div className="flex justify-between items-center mb-4 pb-4 border-b">
+                    <h2 className="text-xl font-bold">Lead Details</h2>
+                    <Button variant="ghost" size="icon" onClick={onClose}>
+                        <XMarkIcon className="h-6 w-6" />
+                    </Button>
+                </div>
+                <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                        <Image src={lead.avatar} alt={lead.fullName} width={80} height={80} className="rounded-full" />
+                        <div>
+                            <h3 className="text-lg font-semibold">{lead.fullName}</h3>
+                            <p className="text-sm text-gray-500">{lead.email}</p>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><strong className="font-medium">Gender:</strong> {lead.gender}</div>
+                        <div><strong className="font-medium">Phone:</strong> {lead.phone}</div>
+                        <div><strong className="font-medium">Date of Birth:</strong> {lead.dob}</div>
+                        <div><strong className="font-medium">Registered:</strong> {lead.contactDate}</div>
+                        <div><strong className="font-medium">Lead Source:</strong> {lead.leadSource}</div>
+                        <div><strong className="font-medium">Customer Type:</strong> {lead.customerType}</div>
+                        <div>
+                            <strong className="font-medium">Status:</strong>{' '}
+                            <Badge size="sm" color={lead.status === "Active" ? "success" : lead.status === "Pending" ? "warning" : "error"}>
+                                {lead.status}
+                            </Badge>
+                        </div>
+                    </div>
+                </div>
+                <div className="mt-6 flex justify-end">
+                    <Button variant="outline" onClick={onClose}>Close</Button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export default function LeadsTable() {
   const [visibleColumns, setVisibleColumns] = useState<(keyof Lead)[]>(() => {
@@ -180,15 +222,15 @@ export default function LeadsTable() {
       const savedColumns = localStorage.getItem('leadsTableVisibleColumns');
       if (savedColumns) {
         const parsed = JSON.parse(savedColumns);
-        if (Array.isArray(parsed)) {
-            return parsed;
-        }
+        if (Array.isArray(parsed)) return parsed;
       }
     } catch (error) {
         console.error("Failed to load columns from localStorage", error);
     }
     return ['fullName', 'gender', 'dob', 'phone', 'status'];
   });
+
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
   useEffect(() => {
     try {
@@ -197,6 +239,14 @@ export default function LeadsTable() {
         console.error("Failed to save columns to localStorage", error);
     }
   }, [visibleColumns]);
+
+  const handleActionSelect = (action: 'view' | 'edit' | 'delete', lead: Lead) => {
+      if (action === 'view') {
+          setSelectedLead(lead);
+      } else {
+          console.log(`${action} lead ${lead.id}`);
+      }
+  };
 
   const renderCellContent = (lead: Lead, columnKey: keyof Lead) => {
     switch (columnKey) {
@@ -226,40 +276,43 @@ export default function LeadsTable() {
   const sortedVisibleColumns = allColumns.filter(col => visibleColumns.includes(col.key));
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-        <div className="p-4 flex justify-end">
-            <ColumnSelector visibleColumns={visibleColumns} setVisibleColumns={setVisibleColumns} />
-        </div>
-        <div className="overflow-x-auto">
-            <div className="min-w-[1000px]">
-                <Table>
-                    <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
-                        <TableRow>
-                            {sortedVisibleColumns.map(col => (
-                                <TableCell key={col.key} isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                                    {col.label}
-                                </TableCell>
-                            ))}
-                            <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-center text-theme-xs dark:text-gray-400">Action</TableCell>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                        {tableData.map((lead) => (
-                            <TableRow key={lead.id}>
+    <>
+        <div className="rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+            <div className="p-4 flex justify-end">
+                <ColumnSelector visibleColumns={visibleColumns} setVisibleColumns={setVisibleColumns} />
+            </div>
+            <div className="overflow-x-auto">
+                <div className="min-w-[1000px]">
+                    <Table>
+                        <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+                            <TableRow>
                                 {sortedVisibleColumns.map(col => (
-                                    <TableCell key={`${lead.id}-${col.key}`} className="px-5 py-4 text-start text-theme-sm">
-                                        {renderCellContent(lead, col.key)}
+                                    <TableCell key={col.key} isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                                        {col.label}
                                     </TableCell>
                                 ))}
-                                <TableCell className="px-4 py-3 text-center">
-                                    <ActionMenu leadId={lead.id} />
-                                </TableCell>
+                                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-center text-theme-xs dark:text-gray-400">Action</TableCell>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+                            {tableData.map((lead) => (
+                                <TableRow key={lead.id}>
+                                    {sortedVisibleColumns.map(col => (
+                                        <TableCell key={`${lead.id}-${col.key}`} className="px-5 py-4 text-start text-theme-sm">
+                                            {renderCellContent(lead, col.key)}
+                                        </TableCell>
+                                    ))}
+                                    <TableCell className="px-4 py-3 text-center">
+                                        <ActionMenu lead={lead} onSelect={handleActionSelect} />
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
             </div>
         </div>
-    </div>
+        <ViewLeadModal lead={selectedLead} onClose={() => setSelectedLead(null)} />
+    </>
   );
 }
