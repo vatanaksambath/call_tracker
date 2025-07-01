@@ -136,7 +136,7 @@ export default function CreateLeadPage() {
     if (!formData.dob) newErrors.dob = "Date of birth is required.";
     if (!formData.email.trim()) { newErrors.email = "Email is required."; } 
     else if (!/\S+@\S+\.\S+/.test(formData.email)) { newErrors.email = "Email address is invalid.";}
-    if (!formData.phone.trim()) newErrors.phone = "Phone number is required.";
+    // if (!formData.phone.trim()) newErrors.phone = "Phone number is required.";
     if (!formData.occupation.trim()) newErrors.occupation = "Occupation is required.";
     if (!formData.leadSource) newErrors.leadSource = "Please select a lead source.";
     if (!formData.contactDate) newErrors.contactDate = "Contact Date is required.";
@@ -146,17 +146,17 @@ export default function CreateLeadPage() {
     if (!formData.address.province) {
         newErrors.address = "A complete address with province is required.";
     }
-   // --- UPDATED: Validation for the nested contact structure ---
-  //  if (formData.contacts.length === 0 || !formData.contacts.some(c => c.contact_values.length > 0)) {
-  //   newErrors.contacts = "At least one contact is required.";
-  // } else {
-  //     const isInvalid = formData.contacts.some(c => 
-  //         !c.channel_type || c.contact_values.some(v => !v.contact_number.trim())
-  //     );
-  //     if (isInvalid) {
-  //         newErrors.contacts = "Each contact group must have a channel and each contact must have a number/ID.";
-  //     }
-  // }
+  //  --- UPDATED: Validation for the nested contact structure ---
+   if (formData.contacts.length === 0 || !formData.contacts.some(c => c.contact_values.length > 0)) {
+    newErrors.contacts = "Contact is required.";
+  } else {
+      const isInvalid = formData.contacts.some(c => 
+          !c.channel_type || c.contact_values.some(v => !v.contact_number.trim())
+      );
+      if (isInvalid) {
+          newErrors.contacts = "Each contact group must have a channel and each contact must have a number/ID.";
+      }
+  }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -213,10 +213,18 @@ export default function CreateLeadPage() {
                     {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email}</p>}
                   </div>
 
-                  <div className="col-span-2 lg:col-span-1">
+                  {/* <div className="col-span-2 lg:col-span-1">
                     <Label>Phone</Label>
                     <PhoneInput selectPosition="start" countries={countries} placeholder="+855 (098) 000-0000" value={formData.phone} onChange={(phoneNumber) => handleChange("phone", phoneNumber)} />
                     {errors.phone && <p className="text-sm text-red-500 mt-1">{errors.phone}</p>}
+                  </div> */}
+
+                  <div className="col-span-2 lg:col-span-1">
+                    <ContactInfo 
+                        value={formData.contacts}
+                        onChange={(newContacts) => handleChange('contacts', newContacts)}
+                        error={errors.contacts}
+                    />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
@@ -264,15 +272,7 @@ export default function CreateLeadPage() {
                         error={errors.address}
                       />
                   </div>
-
-                  <div className="col-span-2 lg:col-span-1">
-                    <ContactInfo 
-                        value={formData.contacts}
-                        onChange={(newContacts) => handleChange('contacts', newContacts)}
-                        error={errors.contacts}
-                    />
-                  </div>
-                  
+   
                   <div className="col-span-3">
                     <Label>Remark</Label>
                     <TextArea value={formData.remark} onChange={(value) => handleChange("remark", value)} rows={3} />

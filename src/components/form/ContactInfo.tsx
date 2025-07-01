@@ -5,6 +5,7 @@ import Select from "@/components/form/Select";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import { PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { EnvelopeIcon, ChevronDownIcon } from "@/icons";
 import api from "@/lib/api";
 import formatApiDataForSelect from "@/lib/utils"; 
 
@@ -33,32 +34,26 @@ interface ContactInfoProps {
     error?: string;
 }
 
+// Type for modal-specific validation errors
+type ModalErrors = {
+    channel_type?: string;
+    contact_values?: {
+        contact_number?: string;
+    }[];
+}[];
+
 const PrimarySegmentedControl = ({ isPrimary, onSetPrimary }: { isPrimary: boolean; onSetPrimary: () => void; }) => {
     const baseClasses = "w-1/2 px-3 py-2.5 text-sm font-medium transition-colors duration-200 focus:outline-none";
-    
-    const primaryClasses = isPrimary
-        ? "bg-blue-600 text-white"
-        : "bg-white dark:bg-dark-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100";
-
-    const notPrimaryClasses = !isPrimary
-        ? "bg-red-500 text-white"
-        : "bg-white dark:bg-dark-700 text-gray-600 dark:text-gray-300";
+    const primaryClasses = isPrimary ? "bg-blue-600 text-white" : "bg-white dark:bg-dark-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100";
+    const notPrimaryClasses = !isPrimary ? "bg-red-500 text-white" : "bg-white dark:bg-dark-700 text-gray-600 dark:text-gray-300";
 
     return (
         <div className="flex w-full rounded-md border border-gray-300 dark:border-gray-600 overflow-hidden">
-            <button
-                type="button"
-                onClick={onSetPrimary}
-                disabled={isPrimary}
-                className={`${baseClasses} rounded-l-md ${primaryClasses} disabled:cursor-not-allowed`}
-            >
+            <button type="button" onClick={onSetPrimary} disabled={isPrimary} className={`${baseClasses} rounded-l-md ${primaryClasses} disabled:cursor-not-allowed`}>
                 Primary
             </button>
             <div className="border-l border-gray-300 dark:border-gray-600"></div>
-            <button
-                type="button"
-                className={`${baseClasses} rounded-r-md ${notPrimaryClasses} cursor-default`}
-            >
+            <button type="button" className={`${baseClasses} rounded-r-md ${notPrimaryClasses} cursor-default`}>
                 Not Primary
             </button>
         </div>
@@ -69,6 +64,7 @@ export default function ContactInfo({ value, onChange, error }: ContactInfoProps
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [localContacts, setLocalContacts] = useState<IContactChannel[]>([]);
     const [channelTypes, setChannelTypes] = useState<ISelectOption[]>([]);
+    const [modalErrors, setModalErrors] = useState<ModalErrors>([]);
 
     useEffect(() => {
         if (isModalOpen && channelTypes.length === 0) {
@@ -80,12 +76,8 @@ export default function ContactInfo({ value, onChange, error }: ContactInfoProps
 
     const handleOpenModal = () => {
         setLocalContacts(JSON.parse(JSON.stringify(value)));
+        setModalErrors([]);
         setIsModalOpen(true);
-    };
-
-    const handleSave = () => {
-        onChange(localContacts);
-        setIsModalOpen(false);
     };
     
     const addChannel = () => {
@@ -118,6 +110,12 @@ export default function ContactInfo({ value, onChange, error }: ContactInfoProps
         const newContacts = [...localContacts];
         newContacts[channelIndex].channel_type = selectedOption;
         setLocalContacts(newContacts);
+
+        if (modalErrors[channelIndex]?.channel_type) {
+            const newErrors = [...modalErrors];
+            newErrors[channelIndex] = { ...newErrors[channelIndex], channel_type: undefined };
+            setModalErrors(newErrors);
+        }
     };
 
     const addContactValue = (channelIndex: number) => {
@@ -146,6 +144,14 @@ export default function ContactInfo({ value, onChange, error }: ContactInfoProps
         const newContacts = [...localContacts];
         (newContacts[channelIndex].contact_values[valueIndex] as any)[field] = fieldValue;
         setLocalContacts(newContacts);
+
+        if (field === 'contact_number' && modalErrors[channelIndex]?.contact_values?.[valueIndex]?.contact_number) {
+            const newErrors = [...modalErrors];
+            if (!newErrors[channelIndex]) newErrors[channelIndex] = {};
+            if (!newErrors[channelIndex].contact_values) newErrors[channelIndex].contact_values = [];
+            newErrors[channelIndex].contact_values![valueIndex] = { ...newErrors[channelIndex].contact_values![valueIndex], contact_number: undefined };
+            setModalErrors(newErrors);
+        }
     };
 
     const setAsPrimary = (channelIndex: number, valueIndex: number) => {
@@ -159,14 +165,64 @@ export default function ContactInfo({ value, onChange, error }: ContactInfoProps
         setLocalContacts(newContacts);
     };
 
+    const validateModal = (): boolean => {
+        let isValid = true;
+        const newErrors: ModalErrors = [];
+
+        localContacts.forEach((channel, cIdx) => {
+            const channelErrors: ModalErrors[number] = {};
+            if (!channel.channel_type) {
+                channelErrors.channel_type = "Channel type is required.";
+                isValid = false;
+            }
+
+            const valueErrors: { contact_number?: string }[] = [];
+            channel.contact_values.forEach((contact, vIdx) => {
+                const contactErrors: { contact_number?: string } = {};
+                if (!contact.contact_number.trim()) {
+                    contactErrors.contact_number = "Contact number is required.";
+                    isValid = false;
+                }
+                valueErrors[vIdx] = contactErrors;
+            });
+
+            if (valueErrors.some(e => e.contact_number)) {
+                channelErrors.contact_values = valueErrors;
+            }
+            newErrors[cIdx] = channelErrors;
+        });
+
+        setModalErrors(newErrors);
+        return isValid;
+    };
+    
+    const handleSave = () => {
+        if (validateModal()) {
+            onChange(localContacts);
+            setIsModalOpen(false);
+        }
+    };
+
+    const handleCancelClick = () => {
+        setLocalContacts(value);
+        setModalErrors([]);
+        setIsModalOpen(false);
+    };
+
     const primaryContact = value.flatMap(c => c.contact_values).find(v => v.is_primary);
-    const displayValue = primaryContact ? `${primaryContact.contact_number} (${primaryContact.remark || 'Primary'})` : "Click to add contact info";
+    const displayValue = primaryContact ? `${primaryContact.user_name}, ${primaryContact.contact_number} (${primaryContact.remark || 'Primary'})` : null;
 
     return (
         <div className="col-span-2 lg:col-span-1">
             <Label>Contact Information</Label>
-            <div onClick={handleOpenModal} className={`w-full p-2 border ${error ? "border-red-500" : "border-gray-300"} rounded-md cursor-pointer bg-white dark:bg-dark-800 h-10 flex items-center`}>
-                <span className="truncate text-sm text-gray-700 dark:text-gray-300">{displayValue}</span>
+            <div onClick={handleOpenModal} className={`w-full p-2 border ${error ? "border-red-500" : "border-gray-300"} rounded-md cursor-pointer bg-white dark:bg-dark-800 h-11 flex items-center`}>
+                <span className="truncate text-sm">    
+                    {displayValue ?(
+                        <span className=" text-gray-600 dark:text-gray-200">{displayValue}</span>
+                    ) : (
+                        <span className="text-gray-400 dark:text-gray-500">Click to add contact info</span>
+                    )}
+                </span>
             </div>
             {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
 
@@ -182,19 +238,23 @@ export default function ContactInfo({ value, onChange, error }: ContactInfoProps
                         
                         <div className="flex-grow overflow-y-auto space-y-5 pr-2">
                             {localContacts.map((channel, channelIndex) => (
-                                <div key={channel.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-dark-800/50">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <div className="flex-grow pr-4">
-                                            <Select options={channelTypes} value={channel.channel_type || undefined} onChange={opt => handleChannelTypeChange(channelIndex, opt)} placeholder="Select a channel type..."/>
-                                        </div>
+                                <div key={channel.id} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-dark-800/50">
+                                    <div className="flex justify-end mb-2">
                                         <Button variant="ghost" size="icon" type="button" onClick={() => removeChannel(channelIndex)}>
                                             <XMarkIcon className="h-6 w-6 text-red-500 hover:text-red-600 transition-colors" />
                                         </Button>
                                     </div>
+                                    <div className="flex justify-between items-center mb-4 bg-white dark:bg-dark-800">
+                                        <div className="relative flex-grow">
+                                            <Select options={channelTypes} value={channel.channel_type || undefined} onChange={opt => handleChannelTypeChange(channelIndex, opt)} placeholder="Select a channel type..."/>
+                                            <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400"><ChevronDownIcon /></span>
+                                            {modalErrors[channelIndex]?.channel_type && <p className="text-xs text-red-500 mt-1">{modalErrors[channelIndex]?.channel_type}</p>}
+                                        </div>    
+                                    </div>
                                     <div className="space-y-4">
                                         {channel.contact_values.map((contact, valueIndex) => (
                                             <div key={contact.id} className="flex items-end p-3 rounded-md bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700">
-                                                <div className="flex-grow grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">                                                   
+                                                <div className="flex-grow grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">                                    
                                                     <div>
                                                         <Label className="text-xs text-gray-500">Username</Label>
                                                         <Input placeholder="Optional" value={contact.user_name} onChange={e => handleValueChange(channelIndex, valueIndex, 'user_name', e.target.value)} />
@@ -202,6 +262,7 @@ export default function ContactInfo({ value, onChange, error }: ContactInfoProps
                                                     <div>
                                                         <Label className="text-xs text-gray-500">Contact Number / ID</Label>
                                                         <Input placeholder="Contact value" value={contact.contact_number} onChange={e => handleValueChange(channelIndex, valueIndex, 'contact_number', e.target.value)} />
+                                                        {modalErrors[channelIndex]?.contact_values?.[valueIndex]?.contact_number && <p className="text-xs text-red-500 mt-1">{modalErrors[channelIndex]?.contact_values?.[valueIndex]?.contact_number}</p>}
                                                     </div>
                                                     <div>
                                                         <Label className="text-xs text-gray-500">Remark</Label>
@@ -212,7 +273,7 @@ export default function ContactInfo({ value, onChange, error }: ContactInfoProps
                                                         <PrimarySegmentedControl isPrimary={contact.is_primary} onSetPrimary={() => setAsPrimary(channelIndex, valueIndex)} />
                                                     </div>
                                                 </div>
-                                                <div className="flex-shrink-0">
+                                                <div className="flex-shrink-0 pl-2">
                                                     {channel.contact_values.length > 1 && (
                                                         <Button variant="ghost" size="icon" type="button" onClick={() => removeContactValue(channelIndex, valueIndex)}>
                                                             <TrashIcon className="h-5 w-5 text-gray-400 hover:text-red-500 transition-colors" />

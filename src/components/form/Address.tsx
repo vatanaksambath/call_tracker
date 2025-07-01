@@ -152,7 +152,7 @@ const handleSaveClick = () => {
         onClick={() => setIsModalOpen(true)}
         className={`w-full p-2 border ${
           error ? "border-red-500" : "border-gray-300"
-        } rounded-md cursor-pointer bg-white dark:bg-dark-800 h-10 flex items-center`}
+        } rounded-md cursor-pointer bg-white dark:bg-dark-800 h-11 flex items-center`}
       >
         <span className="truncate text-sm">
           {displayAddress ? (
@@ -167,9 +167,10 @@ const handleSaveClick = () => {
       {isModalOpen && (
         <div className="fixed inset-0 bg-grey/10 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-dark-900 p-6 rounded-lg shadow-xl w-full max-w-2xl">
-            <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-200">
+            <h2 className="text-xl font-bold mb-3 text-gray-800 dark:text-gray-200">
               Select Address
             </h2>
+            <div className="mb-3 border-b border-gray-200 dark:border-gray-700"/>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label>Province</Label>
@@ -231,7 +232,7 @@ const handleSaveClick = () => {
                 />
               </div>
             </div>
-
+            <div className="mt-5 border-b border-gray-200 dark:border-gray-700"/>
             <div className="flex justify-end gap-4 mt-6">
               <Button variant="outline" type="button" onClick={handleCancelClick}>
                 Cancel

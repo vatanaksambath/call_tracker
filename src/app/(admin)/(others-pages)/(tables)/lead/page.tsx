@@ -30,9 +30,9 @@ export default function LeadsPage() {
                 Add Lead +
               </Button>
             </Link>
-            <Button size="md" variant="outline">
+            {/* <Button size="md" variant="outline">
               Edit Lead
-            </Button>
+            </Button> */}
           </div>
           <LeadsTable />
         </ComponentCard>
