@@ -9,11 +9,48 @@ import {
 } from "../ui/table";
 import Badge from "../ui/badge/Badge";
 import Image from "next/image";
-import { EyeIcon, PencilIcon, TrashIcon, EllipsisHorizontalIcon, AdjustmentsHorizontalIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { 
+    EyeIcon, PencilIcon, TrashIcon, EllipsisVerticalIcon, 
+    AdjustmentsHorizontalIcon, XMarkIcon, ChevronLeftIcon, 
+    ChevronRightIcon, DocumentMagnifyingGlassIcon, UserCircleIcon, 
+    CakeIcon, PhoneIcon, EnvelopeIcon, BriefcaseIcon, MapPinIcon, 
+    TagIcon, BuildingOffice2Icon, CalendarDaysIcon, InformationCircleIcon 
+} from "@heroicons/react/24/outline";
 import Button from "../ui/button/Button";
+import api from "@/lib/api";
+import LoadingOverlay from "../ui/loading/LoadingOverlay";
+
+interface ApiLeadData {
+  lead_id: string;
+  first_name: string;
+  last_name: string;
+  gender_name: string;
+  email: string | null;
+  date_of_birth: string;
+  created_date: string;
+  lead_source_name: string;
+  customer_type_name: string;
+  business_name: string;
+  occupation: string | null;
+  province_name: string | null;
+  district_name: string | null;
+  commune_name: string | null;
+  village_name: string | null;
+  home_address: string | null;
+  street_address: string | null;
+  is_active: boolean;
+  photo_url: string | null;
+  contact_data: {
+      contact_values: {
+          contact_number: string;
+          is_primary: boolean;
+          remark: string;
+      }[];
+  }[];
+}
 
 interface Lead {
-  id: number;
+  id: string;
   fullName: string;
   avatar: string;
   gender: string;
@@ -23,71 +60,23 @@ interface Lead {
   email: string;
   leadSource: string;
   customerType: string;
-  status: 'Active' | 'Pending' | 'Cancel';
+  business: string;
+  occupation: string;
+  address: string;
+  status: 'Active' | 'Inactive';
+  raw: ApiLeadData;
 }
-
-const tableData: Lead[] = [
-  {
-    id: 1,
-    fullName: "Lindsey Curtis",
-    avatar: "/images/user/user-17.jpg",
-    gender: "Female",
-    phone: "012 345 678",
-    dob: "15-06-1990",
-    contactDate: "01-07-2024",
-    email: "lindsey.c@example.com",
-    leadSource: "Website",
-    customerType: "New",
-    status: "Active",
-  },
-  {
-    id: 2,
-    fullName: "Kaiya George",
-    avatar: "/images/user/user-18.jpg",
-    gender: "Female",
-    phone: "098 765 432",
-    dob: "22-11-1992",
-    contactDate: "30-06-2024",
-    email: "kaiya.g@example.com",
-    leadSource: "Referral",
-    customerType: "Returning",
-    status: "Pending",
-  },
-  {
-    id: 3,
-    fullName: "Zain Geidt",
-    avatar: "/images/user/user-19.jpg",
-    gender: "Male",
-    phone: "088 123 456",
-    dob: "03-02-1988",
-    contactDate: "29-06-2024",
-    email: "zain.g@example.com",
-    leadSource: "Facebook",
-    customerType: "VIP",
-    status: "Active",
-  },
-  {
-    id: 4,
-    fullName: "Abram Schleifer",
-    avatar: "/images/user/user-20.jpg",
-    gender: "Male",
-    phone: "077 888 999",
-    dob: "19-09-2001",
-    contactDate: "28-06-2024",
-    email: "abram.s@example.com",
-    leadSource: "Walk-in",
-    customerType: "New",
-    status: "Cancel",
-  },
-];
 
 const allColumns: { key: keyof Lead; label: string }[] = [
     { key: 'fullName', label: 'Full Name' },
     { key: 'gender', label: 'Gender' },
-    { key: 'phone', label: 'Phone Number' },
+    { key: 'phone', label: 'Primary Phone' },
     { key: 'dob', label: 'Date of Birth' },
-    { key: 'contactDate', label: 'Date Registered' },
+    { key: 'contactDate', label: 'Contact Date' },
     { key: 'email', label: 'Email' },
+    { key: 'occupation', label: 'Occupation' },
+    { key: 'business', label: 'Business' },
+    { key: 'address', label: 'Address' },
     { key: 'leadSource', label: 'Lead Source' },
     { key: 'customerType', label: 'Customer Type' },
     { key: 'status', label: 'Status' },
@@ -108,7 +97,7 @@ const ActionMenu = ({ lead, onSelect }: { lead: Lead; onSelect: (action: 'view' 
     return (
         <div className="relative" ref={menuRef}>
             <button onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors">
-                <EllipsisHorizontalIcon className="h-5 w-5 text-gray-500" />
+                <EllipsisVerticalIcon className="h-5 w-5 text-gray-500" />
             </button>
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-dark-800 border border-gray-200 dark:border-white/[0.05] rounded-lg shadow-lg z-10">
@@ -150,12 +139,12 @@ const ColumnSelector = ({ visibleColumns, setVisibleColumns }: { visibleColumns:
                 Customize Columns
             </Button>
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-dark-800 border border-gray-200 dark:border-white/[0.05] rounded-lg shadow-lg z-10">
+                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-dark-800 border border-gray-200 dark:border-white/[0.05] rounded-lg shadow-lg z-10">
                     <div className="p-4">
                         <h4 className="font-semibold mb-2">Visible Columns</h4>
                         <div className="grid grid-cols-2 gap-2">
                             {allColumns.map(col => (
-                                <label key={col.key} className="flex items-center gap-2 text-sm">
+                                <label key={col.key} className="flex items-center gap-2 text-sm cursor-pointer">
                                     <input 
                                         type="checkbox" 
                                         checked={visibleColumns.includes(col.key)}
@@ -176,39 +165,66 @@ const ColumnSelector = ({ visibleColumns, setVisibleColumns }: { visibleColumns:
 const ViewLeadModal = ({ lead, onClose }: { lead: Lead | null; onClose: () => void; }) => {
     if (!lead) return null;
 
+    const DetailItem = ({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: React.ReactNode }) => (
+        <div className="flex items-start gap-3">
+            <Icon className="h-5 w-5 text-gray-400 mt-0.5" />
+            <div>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</p>
+                <p className="text-sm text-gray-800 dark:text-gray-100">{value}</p>
+            </div>
+        </div>
+    );
+
     return (
-        <div className="fixed inset-0 bg-grey/10 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-dark-900 p-6 rounded-lg shadow-xl w-full max-w-2xl">
-                <div className="flex justify-between items-center mb-4 pb-4 border-b">
-                    <h2 className="text-xl font-bold">Lead Details</h2>
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-dark-800 p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col border border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between items-center pb-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-50">Lead Information</h2>
                     <Button variant="ghost" size="icon" onClick={onClose}>
-                        <XMarkIcon className="h-6 w-6" />
+                        <XMarkIcon className="h-6 w-6 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200" />
                     </Button>
                 </div>
-                <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                        <Image src={lead.avatar} alt={lead.fullName} width={80} height={80} className="rounded-full" />
-                        <div>
-                            <h3 className="text-lg font-semibold">{lead.fullName}</h3>
-                            <p className="text-sm text-gray-500">{lead.email}</p>
+                
+                <div className="flex-grow overflow-y-auto mt-6 pr-2">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-1 lg:border-r lg:pr-6 border-gray-200 dark:border-gray-700">
+                            <div className="flex flex-col items-center text-center">
+                                <Image src={lead.avatar} alt={lead.fullName} width={128} height={128} className="rounded-full bg-gray-200 mb-4" onError={(e) => { e.currentTarget.src = "/images/user/user-02.jpg"; }}/>
+                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white uppercase">{lead.fullName}</h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">{lead.email}</p>
+                                <div className="mt-2">
+                                    <Badge size="md" color={lead.status === "Active" ? "success" : "error"}>{lead.status}</Badge>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><strong className="font-medium">Gender:</strong> {lead.gender}</div>
-                        <div><strong className="font-medium">Phone:</strong> {lead.phone}</div>
-                        <div><strong className="font-medium">Date of Birth:</strong> {lead.dob}</div>
-                        <div><strong className="font-medium">Registered:</strong> {lead.contactDate}</div>
-                        <div><strong className="font-medium">Lead Source:</strong> {lead.leadSource}</div>
-                        <div><strong className="font-medium">Customer Type:</strong> {lead.customerType}</div>
-                        <div>
-                            <strong className="font-medium">Status:</strong>{' '}
-                            <Badge size="sm" color={lead.status === "Active" ? "success" : lead.status === "Pending" ? "warning" : "error"}>
-                                {lead.status}
-                            </Badge>
+
+                        <div className="lg:col-span-2 space-y-6">
+                            <div>
+                                <h4 className="font-semibold mb-3 text-gray-700 dark:text-gray-300">Personal Details</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <DetailItem icon={UserCircleIcon} label="Gender" value={lead.gender} />
+                                    <DetailItem icon={PhoneIcon} label="Primary Phone" value={lead.phone} />
+                                    <DetailItem icon={CakeIcon} label="Date of Birth" value={lead.dob} />
+                                    <DetailItem icon={BriefcaseIcon} label="Occupation" value={lead.occupation} />
+                                </div>
+                            </div>
+                             <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                                <h4 className="font-semibold mb-3 text-gray-700 dark:text-gray-300">Lead Information</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <DetailItem icon={TagIcon} label="Lead Source" value={lead.leadSource} />
+                                    <DetailItem icon={InformationCircleIcon} label="Customer Type" value={lead.customerType} />
+                                    <DetailItem icon={BuildingOffice2Icon} label="Business" value={lead.business} />
+                                    <DetailItem icon={CalendarDaysIcon} label="Contact Date" value={lead.contactDate} />
+                                </div>
+                            </div>
+                            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                                <DetailItem icon={MapPinIcon} label="Address" value={lead.address} />
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div className="mt-6 flex justify-end">
+
+                <div className="mt-8 flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
                     <Button variant="outline" onClick={onClose}>Close</Button>
                 </div>
             </div>
@@ -216,103 +232,227 @@ const ViewLeadModal = ({ lead, onClose }: { lead: Lead | null; onClose: () => vo
     );
 };
 
+const Pagination = ({ currentPage, totalPages, onPageChange }: { currentPage: number, totalPages: number, onPageChange: (page: number) => void }) => {
+    const getPageNumbers = () => {
+        const pageNumbers = [];
+        const maxPagesToShow = 5;
+        const halfPages = Math.floor(maxPagesToShow / 2);
+
+        if (totalPages <= maxPagesToShow) {
+            for (let i = 1; i <= totalPages; i++) pageNumbers.push(i);
+        } else {
+            let startPage = Math.max(1, currentPage - halfPages);
+            let endPage = Math.min(totalPages, currentPage + halfPages);
+
+            if (currentPage - halfPages < 1) endPage = maxPagesToShow;
+            if (currentPage + halfPages > totalPages) startPage = totalPages - maxPagesToShow + 1;
+
+            if (startPage > 1) {
+                pageNumbers.push(1);
+                if (startPage > 2) pageNumbers.push('...');
+            }
+            for (let i = startPage; i <= endPage; i++) pageNumbers.push(i);
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) pageNumbers.push('...');
+                pageNumbers.push(totalPages);
+            }
+        }
+        return pageNumbers;
+    };
+
+    return (
+        <nav className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}><ChevronLeftIcon className="h-4 w-4" /></Button>
+            {getPageNumbers().map((page, index) =>
+                typeof page === 'number' ? (
+                    <Button key={index} variant={currentPage === page ? 'outline' : 'default'} size="sm" onClick={() => onPageChange(page)} className="w-9">{page}</Button>
+                ) : (
+                    <span key={index} className="px-2 py-1 text-sm">...</span>
+                )
+            )}
+            <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}><ChevronRightIcon className="h-4 w-4" /></Button>
+        </nav>
+    );
+};
+
 export default function LeadsTable() {
-  const [visibleColumns, setVisibleColumns] = useState<(keyof Lead)[]>(() => {
-    try {
-      const savedColumns = localStorage.getItem('leadsTableVisibleColumns');
-      if (savedColumns) {
-        const parsed = JSON.parse(savedColumns);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch (error) {
-        console.error("Failed to load columns from localStorage", error);
-    }
-    return ['fullName', 'gender', 'dob', 'phone', 'status'];
-  });
+    const [leads, setLeads] = useState<Lead[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalRows, setTotalRows] = useState(0);
 
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+    const [visibleColumns, setVisibleColumns] = useState<(keyof Lead)[]>(() => {
+        try {
+            const savedColumns = localStorage.getItem('leadsTableVisibleColumns');
+            return savedColumns ? JSON.parse(savedColumns) : ['fullName', 'phone', 'contactDate', 'status'];
+        } catch (error) {
+            return ['fullName', 'phone', 'contactDate', 'status'];
+        }
+    });
 
-  useEffect(() => {
-    try {
+    const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+
+    useEffect(() => {
+        const fetchLeads = async () => {
+            setIsLoading(true);
+            try {
+                const response = await api.post('/lead/pagination', {
+                    page_number: String(currentPage),
+                    page_size: String(pageSize),
+                    search_type: "",
+                    query_search: ""
+                });
+                
+                const apiResult = response.data[0];
+                if (apiResult && apiResult.data) {
+                    const formattedLeads: Lead[] = apiResult.data.map((lead: ApiLeadData) => {
+                        const primaryContact = lead.contact_data?.flatMap(cd => cd.contact_values).find(cv => cv.is_primary);
+                        const fullAddress = [
+                            lead.home_address,
+                            lead.street_address,
+                            lead.village_name,
+                            lead.commune_name,
+                            lead.district_name,
+                            lead.province_name,
+                        ].filter(Boolean).join(', ');
+
+                        return {
+                            id: lead.lead_id,
+                            fullName: `${lead.first_name} ${lead.last_name}`,
+                            avatar: lead.photo_url || "/images/user/user-02.jpg",
+                            gender: lead.gender_name,
+                            phone: primaryContact?.contact_number || 'N/A',
+                            dob: lead.date_of_birth,
+                            contactDate: new Date(lead.created_date).toLocaleDateString(),
+                            email: lead.email || 'N/A',
+                            leadSource: lead.lead_source_name,
+                            customerType: lead.customer_type_name,
+                            business: lead.business_name,
+                            occupation: lead.occupation || 'N/A',
+                            address: fullAddress || 'N/A',
+                            status: lead.is_active ? 'Active' : 'Inactive',
+                            raw: lead,
+                        };
+                    });
+                    
+                    setLeads(formattedLeads);
+                    setTotalRows(apiResult.total_row);
+                } else {
+                    setLeads([]);
+                    setTotalRows(0);
+                }
+
+            } catch (error) {
+                console.error("Failed to fetch leads:", error);
+                setLeads([]);
+                setTotalRows(0);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchLeads();
+    }, [currentPage, pageSize]);
+
+    useEffect(() => {
         localStorage.setItem('leadsTableVisibleColumns', JSON.stringify(visibleColumns));
-    } catch (error) {
-        console.error("Failed to save columns to localStorage", error);
-    }
-  }, [visibleColumns]);
+    }, [visibleColumns]);
 
-  const handleActionSelect = (action: 'view' | 'edit' | 'delete', lead: Lead) => {
-      if (action === 'view') {
-          setSelectedLead(lead);
-      } else {
-          console.log(`${action} lead ${lead.id}`);
-      }
-  };
+    const handleActionSelect = (action: 'view' | 'edit' | 'delete', lead: Lead) => {
+        if (action === 'view') {
+            setSelectedLead(lead);
+        } else {
+            console.log(`${action} lead ${lead.id}`);
+        }
+    };
 
-  const renderCellContent = (lead: Lead, columnKey: keyof Lead) => {
-    switch (columnKey) {
-        case 'fullName':
-            return (
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 overflow-hidden rounded-full">
-                        <Image width={40} height={40} src={lead.avatar} alt={lead.fullName} />
+    const renderCellContent = (lead: Lead, columnKey: keyof Lead) => {
+        switch (columnKey) {
+            case 'fullName':
+                return (
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 overflow-hidden rounded-full">
+                            <Image width={40} height={40} src={lead.avatar} alt={lead.fullName} onError={(e) => { e.currentTarget.src = "/images/user/user-02.jpg"; }}/>
+                        </div>
+                        <div>
+                            <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">{lead.fullName}</span>
+                            <span className="block text-gray-500 text-theme-xs dark:text-gray-400">{lead.email}</span>
+                        </div>
                     </div>
-                    <div>
-                        <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">{lead.fullName}</span>
-                        <span className="block text-gray-500 text-theme-xs dark:text-gray-400">{lead.email}</span>
-                    </div>
+                );
+            case 'status':
+                return (
+                    <Badge size="sm" color={lead.status === "Active" ? "success" : "error"}>
+                        {lead.status}
+                    </Badge>
+                );
+            default:
+                return <span className="text-gray-600 dark:text-gray-400">{lead[columnKey]}</span>;
+        }
+    };
+
+    const sortedVisibleColumns = allColumns.filter(col => visibleColumns.includes(col.key));
+    const totalPages = Math.ceil(totalRows / pageSize);
+
+    return (
+        <>
+            <LoadingOverlay isLoading={isLoading} />
+            <div className="rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+                <div className="p-2 flex justify-end">
+                    <ColumnSelector visibleColumns={visibleColumns} setVisibleColumns={setVisibleColumns} />
                 </div>
-            );
-        case 'status':
-            return (
-                <Badge size="sm" color={lead.status === "Active" ? "success" : lead.status === "Pending" ? "warning" : "error"}>
-                    {lead.status}
-                </Badge>
-            );
-        default:
-            return <span className="text-gray-600 dark:text-gray-400">{lead[columnKey]}</span>;
-    }
-  };
-
-  const sortedVisibleColumns = allColumns.filter(col => visibleColumns.includes(col.key));
-
-  return (
-    <>
-        <div className="rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-            <div className="p-4 flex justify-end">
-                <ColumnSelector visibleColumns={visibleColumns} setVisibleColumns={setVisibleColumns} />
-            </div>
-            <div className="overflow-x-auto">
-                <div className="min-w-[1000px]">
-                    <Table>
-                        <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
-                            <TableRow>
-                                {sortedVisibleColumns.map(col => (
-                                    <TableCell key={col.key} isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                                        {col.label}
-                                    </TableCell>
-                                ))}
-                                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-center text-theme-xs dark:text-gray-400">Action</TableCell>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                            {tableData.map((lead) => (
-                                <TableRow key={lead.id}>
+                <div className="overflow-x-auto">
+                    <div className="min-w-[1000px]">
+                        <Table>
+                            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+                                <TableRow>
                                     {sortedVisibleColumns.map(col => (
-                                        <TableCell key={`${lead.id}-${col.key}`} className="px-5 py-4 text-start text-theme-sm">
-                                            {renderCellContent(lead, col.key)}
+                                        <TableCell key={col.key} isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                                            {col.label}
                                         </TableCell>
                                     ))}
-                                    <TableCell className="px-4 py-3 text-center">
-                                        <ActionMenu lead={lead} onSelect={handleActionSelect} />
-                                    </TableCell>
+                                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-center text-theme-xs dark:text-gray-400">Action</TableCell>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+                                {leads.length === 0 && !isLoading ? (
+                                    <TableRow>
+                                        <TableCell
+                                            colSpan={sortedVisibleColumns.length + 1}
+                                            className="h-[300px] px-5 py-4"
+                                        >
+                                            <div className="flex flex-col items-center justify-center h-full w-full text-center text-gray-400 gap-2">
+                                            <DocumentMagnifyingGlassIcon className="h-12 w-12" />
+                                            <span className="font-medium">No leads found.</span>
+                                            <span className="text-sm">There might be a connection issue!!!</span>
+                                            </div>
+                                        </TableCell>
+                                        </TableRow>
+                                ) : (
+                                    leads.map((lead) => (
+                                        <TableRow key={lead.id}>
+                                            {sortedVisibleColumns.map(col => (
+                                                <TableCell key={`${lead.id}-${col.key}`} className="px-5 py-4 text-start text-theme-sm">
+                                                    {renderCellContent(lead, col.key)}
+                                                </TableCell>
+                                            ))}
+                                            <TableCell className="px-4 py-3 text-center">
+                                                <ActionMenu lead={lead} onSelect={handleActionSelect} />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </div>
+                <div className="p-4 flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Showing {leads.length} of {totalRows} results</span>
+                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
                 </div>
             </div>
-        </div>
-        <ViewLeadModal lead={selectedLead} onClose={() => setSelectedLead(null)} />
-    </>
-  );
+            <ViewLeadModal lead={selectedLead} onClose={() => setSelectedLead(null)} />
+        </>
+    );
 }

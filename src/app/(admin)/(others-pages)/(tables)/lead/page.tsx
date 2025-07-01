@@ -7,12 +7,6 @@ import React from "react";
 import Button from "@/components/ui/button/Button";
 import Link from "next/link";
 
-// export const metadata: Metadata = {
-//   title: "Next.js Basic Table | TailAdmin - Next.js Dashboard Template",
-//   description:
-//     "This is Next.js Basic Table page for TailAdmin Tailwind CSS Admin Dashboard Template",
-//   // other metadata
-// };
 const breadcrumbs = [
     { name: "Home", href: "/" },
     { name: "Lead", href: "/lead" }
