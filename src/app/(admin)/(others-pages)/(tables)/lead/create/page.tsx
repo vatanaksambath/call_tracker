@@ -15,10 +15,11 @@ import { EnvelopeIcon, ChevronDownIcon } from "@/icons";
 import axios from "axios";
 import Address, { IAddress } from "@/components/form/Address";
 import ContactInfo, { IContactChannel } from "@/components/form/ContactInfo";
+import ImageUpload from "@/components/form/ImageUpload";
 
 interface SelectOption {
-    value: string;
-    label: string;
+  value: string;
+  label: string;
 }
 
 export default function CreateLeadPage() {
@@ -43,17 +44,18 @@ export default function CreateLeadPage() {
     customerType: null as SelectOption | null,
     business: null as SelectOption | null,
     address: {
-        province: null, district: null, commune: null, village: null,
-        homeAddress: "", streetAddress: ""
+      province: null, district: null, commune: null, village: null,
+      homeAddress: "", streetAddress: ""
     } as IAddress,
     remark: "",
-    contact_data: [] as IContactChannel[], 
+    contact_data: [] as IContactChannel[],
+    photo: null as File | null,
   });
 
   type LeadFormErrors = {
     firstName?: string; lastName?: string; gender?: string; dob?: string; email?: string;
     phone?: string; occupation?: string; leadSource?: string; contactDate?: string; customerType?: string;
-    business?: string; address?: string; remark?: string; contact_data?: string;
+    business?: string; address?: string; remark?: string; contact_data?: string; photo?: File;
   };
 
   const [errors, setErrors] = useState<LeadFormErrors>({});
@@ -87,10 +89,10 @@ export default function CreateLeadPage() {
           value: String(item.lead_source_id),
           label: item.lead_source_name
         }));
-        
+
         const formattedCustomerTypes = customerType.data.map((item: any) => ({
-            value: String(item.customer_type_id),
-            label: item.customer_type_name
+          value: String(item.customer_type_id),
+          label: item.customer_type_name
         }));
 
         const formattedChannelTypes = channelType.data.map((item: any) => ({
@@ -118,11 +120,11 @@ export default function CreateLeadPage() {
   const handleChange = (field: keyof typeof formData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
-        setErrors(prevErrors => {
-            const newErrors = { ...prevErrors };
-            delete newErrors[field];
-            return newErrors;
-        });
+      setErrors(prevErrors => {
+        const newErrors = { ...prevErrors };
+        delete newErrors[field];
+        return newErrors;
+      });
     }
   };
 
@@ -132,8 +134,8 @@ export default function CreateLeadPage() {
     if (!formData.lastName.trim()) newErrors.lastName = "Last name is required.";
     if (!formData.gender) newErrors.gender = "Please select a gender.";
     if (!formData.dob) newErrors.dob = "Date of birth is required.";
-    if (!formData.email.trim()) { newErrors.email = "Email is required."; } 
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) { newErrors.email = "Email address is invalid.";}
+    if (!formData.email.trim()) { newErrors.email = "Email is required."; }
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) { newErrors.email = "Email address is invalid."; }
     // if (!formData.phone.trim()) newErrors.phone = "Phone number is required.";
     if (!formData.occupation.trim()) newErrors.occupation = "Occupation is required.";
     if (!formData.leadSource) newErrors.leadSource = "Please select a lead source.";
@@ -142,147 +144,144 @@ export default function CreateLeadPage() {
     if (!formData.customerType) newErrors.customerType = "Please select a customer type.";
     if (!formData.business) newErrors.business = "Please select a business.";
     if (!formData.address.province) {
-        newErrors.address = "A complete address with province is required.";
+      newErrors.address = "A complete address with province is required.";
     }
     if (formData.contact_data.length === 0 || !formData.contact_data.some(c => c.contact_values.length > 0)) {
-    newErrors.contact_data = "Contact is required.";
+      newErrors.contact_data = "Contact is required.";
     } else {
-        const isInvalid = formData.contact_data.some(c => 
-            !c.channel_type || c.contact_values.some(v => !v.contact_number.trim())
-        );
-        if (isInvalid) {
-            newErrors.contact_data = "Each contact group must have a channel and each contact must have a number/ID.";
-        }
+      const isInvalid = formData.contact_data.some(c =>
+        !c.channel_type || c.contact_values.some(v => !v.contact_number.trim())
+      );
+      if (isInvalid) {
+        newErrors.contact_data = "Each contact group must have a channel and each contact must have a number/ID.";
+      }
     }
     console.log(formData);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
-  const handleSave = () => { 
-    if (validate()) {} 
+
+  const handleSave = () => {
+    if (validate()) { }
   };
   const handleCancel = () => { router.push("/lead"); };
 
-  const countries = [ { code: "KH", label: "+855" }, { code: "US", label: "+1" }];
+  const countries = [{ code: "KH", label: "+855" }, { code: "US", label: "+1" }];
 
   return (
     <div>
       <PageBreadcrumb crumbs={breadcrumbs} />
       <div className="space-y-6">
-        <ComponentCard title="Create New Lead">
-          <form className="flex flex-col" noValidate onSubmit={(e) => { e.preventDefault(); handleSave() }}>
-              <div className="px-2 pb-3">
-                <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-3">
+        <form className="flex flex-col" noValidate onSubmit={(e) => { e.preventDefault(); handleSave() }}>
+          <ComponentCard title="Lead Information">
+            <div className="px-2 pb-2">
+              <div className="col-span-2 lg:col-span-3 pb-6">
+                  <ImageUpload
+                    value={formData.photo}
+                    onChange={(file) => handleChange('photo', file)}
+                  />
+              </div>
+              <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-3 p-3 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-4 shadow-md">                
+                <div className="col-span-2 lg:col-span-1">
+                  <Label>First Name</Label>
+                  <Input type="text" placeholder="Enter first name" value={formData.firstName} onChange={(e) => handleChange("firstName", e.target.value)} />
+                  {errors.firstName && <p className="text-sm text-red-500 mt-1">{errors.firstName}</p>}
+                </div>
 
-                  <div className="col-span-2 lg:col-span-1">
-                    <Label>First Name</Label>
-                    <Input type="text" placeholder="Enter first name" value={formData.firstName} onChange={(e) => handleChange("firstName", e.target.value)} />
-                    {errors.firstName && <p className="text-sm text-red-500 mt-1">{errors.firstName}</p>}
-                  </div>
+                <div className="col-span-2 lg:col-span-1">
+                  <Label>Last Name</Label>
+                  <Input type="text" placeholder="Enter last name" value={formData.lastName} onChange={(e) => handleChange("lastName", e.target.value)} />
+                  {errors.lastName && <p className="text-sm text-red-500 mt-1">{errors.lastName}</p>}
+                </div>
 
-                  <div className="col-span-2 lg:col-span-1">
-                    <Label>Last Name</Label>
-                    <Input type="text" placeholder="Enter last name" value={formData.lastName} onChange={(e) => handleChange("lastName", e.target.value)} />
-                    {errors.lastName && <p className="text-sm text-red-500 mt-1">{errors.lastName}</p>}
+                <div className="col-span-2 lg:col-span-1">
+                  <Label>Gender</Label>
+                  <div className="relative">
+                    <Select options={genderOptions} value={formData.gender || undefined} onChange={(selectedOption) => handleChange("gender", selectedOption)} className="dark:bg-dark-900" />
+                    <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400"><ChevronDownIcon /></span>
                   </div>
+                  {errors.gender && <p className="text-sm text-red-500 mt-1">{errors.gender}</p>}
+                </div>
+                <div className="col-span-2 lg:col-span-1">
+                  <DatePicker id="date-picker-dob" label="Date of Birth" placeholder="Select a date" value={formData.dob || undefined} onChange={(dates) => handleChange("dob", dates[0])} />
+                  {errors.dob && <p className="text-sm text-red-500 mt-1">{errors.dob}</p>}
+                </div>
 
-                  <div className="col-span-2 lg:col-span-1">
-                    <Label>Gender</Label>
-                    <div className="relative">
-                      <Select options={genderOptions} value={formData.gender || undefined} onChange={(selectedOption) => handleChange("gender", selectedOption)} className="dark:bg-dark-900" />
-                      <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400"><ChevronDownIcon /></span>
-                    </div>
-                    {errors.gender && <p className="text-sm text-red-500 mt-1">{errors.gender}</p>}
+                <div className="col-span-2 lg:col-span-1">
+                  <Label>Email</Label>
+                  <div className="relative">
+                    <Input placeholder="info@gmail.com" type="email" className="pl-[62px]" value={formData.email} onChange={(e) => handleChange("email", e.target.value)} />
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 border-r border-gray-200 px-3.5 py-3 text-gray-500 dark:border-gray-800 dark:text-gray-400"><EnvelopeIcon /></span>
                   </div>
-
-                  <div className="col-span-2 lg:col-span-1">
-                    <DatePicker id="date-picker-dob" label="Date of Birth" placeholder="Select a date" value={formData.dob || undefined} onChange={(dates) => handleChange("dob", dates[0])} />
-                    {errors.dob && <p className="text-sm text-red-500 mt-1">{errors.dob}</p>}
+                  {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email}</p>}
+                </div>
+                <div className="col-span-2 lg:col-span-1">
+                  <ContactInfo
+                    value={formData.contact_data}
+                    onChange={(newcontact_data) => handleChange('contact_data', newcontact_data)}
+                    error={errors.contact_data}
+                  />
+                </div>
+                <div className="col-span-2 lg:col-span-1">
+                  <Label>Business</Label>
+                  <div className="relative">
+                    <Select options={businessOptions} value={formData.business || undefined} onChange={(selectedOption) => handleChange("business", selectedOption)} className="dark:bg-dark-900" />
+                    <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400"><ChevronDownIcon /></span>
                   </div>
-
-                  <div className="col-span-2 lg:col-span-1">
-                    <Label>Email</Label>
-                    <div className="relative">
-                      <Input placeholder="info@gmail.com" type="email" className="pl-[62px]" value={formData.email} onChange={(e) => handleChange("email", e.target.value)} />
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 border-r border-gray-200 px-3.5 py-3 text-gray-500 dark:border-gray-800 dark:text-gray-400"><EnvelopeIcon /></span>
-                    </div>
-                    {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email}</p>}
-                  </div>
-
-                  {/* <div className="col-span-2 lg:col-span-1">
-                    <Label>Phone</Label>
-                    <PhoneInput selectPosition="start" countries={countries} placeholder="+855 (098) 000-0000" value={formData.phone} onChange={(phoneNumber) => handleChange("phone", phoneNumber)} />
-                    {errors.phone && <p className="text-sm text-red-500 mt-1">{errors.phone}</p>}
-                  </div> */}
-
-                  <div className="col-span-2 lg:col-span-1">
-                    <ContactInfo 
-                        value={formData.contact_data}
-                        onChange={(newcontact_data) => handleChange('contact_data', newcontact_data)}
-                        error={errors.contact_data}
-                    />
-                  </div>
-
-                  <div className="col-span-2 lg:col-span-1">
-                    <Label>Lead Source</Label>
-                    <div className="relative">
-                      <Select options={leadSourceOptions} value={formData.leadSource || undefined} onChange={(selectedOption) => handleChange("leadSource", selectedOption)} className="dark:bg-dark-900" />
-                      <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400"><ChevronDownIcon /></span>
-                    </div>
-                    {errors.leadSource && <p className="text-sm text-red-500 mt-1">{errors.leadSource}</p>}
-                  </div>
-
-                  <div className="col-span-2 lg:col-span-1">
-                    <DatePicker id="date-picker-contactDate" label="Contact Date" placeholder="Select a date" value={formData.contactDate || undefined} onChange={(dates) => handleChange("contactDate", dates[0])} />
-                    {errors.dob && <p className="text-sm text-red-500 mt-1">{errors.contactDate}</p>}
-                  </div>
-
-                  <div className="col-span-2 lg:col-span-1">
-                    <Label>Occupation</Label>
-                    <Input type="text" placeholder="Enter occupation" value={formData.occupation} onChange={(e) => handleChange("occupation", e.target.value)} />
-                    {errors.occupation && <p className="text-sm text-red-500 mt-1">{errors.occupation}</p>}
-                  </div>
-            
-                  <div className="col-span-2 lg:col-span-1">
-                    <Label>Customer Type</Label>
-                    <div className="relative">
-                      <Select options={customerTypeOptions} value={formData.customerType || undefined} onChange={(selectedOption) => handleChange("customerType", selectedOption)} className="dark:bg-dark-900" />
-                      <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400"><ChevronDownIcon /></span>
-                    </div>
-                    {errors.customerType && <p className="text-sm text-red-500 mt-1">{errors.customerType}</p>}
-                  </div>
-
-                  <div className="col-span-2 lg:col-span-1">
-                    <Label>Business</Label>
-                    <div className="relative">
-                      <Select options={businessOptions} value={formData.business || undefined} onChange={(selectedOption) => handleChange("business", selectedOption)} className="dark:bg-dark-900" />
-                      <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400"><ChevronDownIcon /></span>
-                    </div>
-                    {errors.business && <p className="text-sm text-red-500 mt-1">{errors.business}</p>}
-                  </div>
-
-                   <div className="col-span-2 lg:col-span-1">
-                      <Address 
-                        value={formData.address}
-                        onSave={(newAddress) => handleChange('address', newAddress) }
-                        error={errors.address}
-                      />
-                  </div>
-   
-                  <div className="col-span-3">
-                    <Label>Remark</Label>
-                    <TextArea value={formData.remark} onChange={(value) => handleChange("remark", value)} rows={3} />
-                  </div>
+                  {errors.business && <p className="text-sm text-red-500 mt-1">{errors.business}</p>}
+                </div>
+                <div className="col-span-2 lg:col-span-1">
+                  <Address
+                    value={formData.address}
+                    onSave={(newAddress) => handleChange('address', newAddress)}
+                    error={errors.address}
+                  />
+                </div>
+                <div className="col-span-2 lg:col-span-1">
+                  <Label>Occupation</Label>
+                  <Input type="text" placeholder="Enter occupation" value={formData.occupation} onChange={(e) => handleChange("occupation", e.target.value)} />
+                  {errors.occupation && <p className="text-sm text-red-500 mt-1">{errors.occupation}</p>}
                 </div>
               </div>
-
-              <div className="flex items-center gap-3 mt-6 justify-end">
-                <Button size="md" variant="outline" type="button" onClick={handleCancel}>Cancel</Button>
-                <Button size="md" type="submit">Save Lead</Button>
+            </div>
+          </ComponentCard>
+          <div className="pb-3"/>
+          <ComponentCard title="Create New Lead">
+            <div className="px-2 pb-3">
+              <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-3 p-3 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-4 shadow-md">      
+                <div className="col-span-2 lg:col-span-1">
+                  <Label>Lead Source</Label>
+                  <div className="relative">
+                    <Select options={leadSourceOptions} value={formData.leadSource || undefined} onChange={(selectedOption) => handleChange("leadSource", selectedOption)} className="dark:bg-dark-900" />
+                    <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400"><ChevronDownIcon /></span>
+                  </div>
+                  {errors.leadSource && <p className="text-sm text-red-500 mt-1">{errors.leadSource}</p>}
+                </div>          
+                <div className="col-span-2 lg:col-span-1">
+                  <Label>Customer Type</Label>
+                  <div className="relative">
+                    <Select options={customerTypeOptions} value={formData.customerType || undefined} onChange={(selectedOption) => handleChange("customerType", selectedOption)} className="dark:bg-dark-900" />
+                    <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400"><ChevronDownIcon /></span>
+                  </div>
+                  {errors.customerType && <p className="text-sm text-red-500 mt-1">{errors.customerType}</p>}
+                </div>
+                <div className="col-span-2 lg:col-span-1">
+                  <DatePicker id="date-picker-contactDate" label="Contact Date" placeholder="Select a date" value={formData.contactDate || undefined} onChange={(dates) => handleChange("contactDate", dates[0])} />
+                  {errors.dob && <p className="text-sm text-red-500 mt-1">{errors.contactDate}</p>}
+                </div>
+                <div className="col-span-2 lg:col-span-3">
+                  <Label>Remark</Label>
+                  <TextArea value={formData.remark} onChange={(value) => handleChange("remark", value)} rows={3} />
+                </div>
               </div>
-          </form>
-        </ComponentCard>
+            </div>
+
+            <div className="flex items-center gap-3 mt-6 justify-end">
+              <Button size="md" variant="outline" type="button" onClick={handleCancel}>Cancel</Button>
+              <Button size="md" type="submit">Save Lead</Button>
+            </div>
+          </ComponentCard>
+        </form>
       </div>
     </div>
   );

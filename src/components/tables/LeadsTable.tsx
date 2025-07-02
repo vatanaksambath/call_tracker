@@ -406,7 +406,7 @@ export default function LeadsTable() {
                     <ColumnSelector visibleColumns={visibleColumns} setVisibleColumns={setVisibleColumns} />
                 </div>
                 <div className="overflow-x-auto">
-                    <div className="min-w-[1000px]">
+                    <div className="min-w-[1000px] min-h-[26vh]">
                         <Table>
                             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                                 <TableRow>

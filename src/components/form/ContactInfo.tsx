@@ -4,8 +4,8 @@ import Button from "@/components/ui/button/Button";
 import Select from "@/components/form/Select";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
-import { PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { EnvelopeIcon, ChevronDownIcon } from "@/icons";
+import { PlusIcon, TrashIcon, XMarkIcon, IdentificationIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon } from "@/icons";
 import api from "@/lib/api";
 import formatApiDataForSelect from "@/lib/utils"; 
 
@@ -215,14 +215,17 @@ export default function ContactInfo({ value, onChange, error }: ContactInfoProps
     return (
         <div className="col-span-2 lg:col-span-1">
             <Label>Contact Information</Label>
-            <div onClick={handleOpenModal} className={`w-full p-2 border ${error ? "border-red-500" : "border-gray-300"} rounded-md cursor-pointer bg-white dark:bg-dark-800 h-11 flex items-center`}>
-                <span className="truncate text-sm">    
-                    {displayValue ?(
-                        <span className=" text-gray-600 dark:text-gray-200">{displayValue}</span>
+            <div onClick={handleOpenModal} className={`w-full border ${error ? "border-red-500" : "border-gray-300"} rounded-md cursor-pointer bg-white dark:bg-dark-800 h-11 flex items-center overflow-hidden`}>
+                <div className="flex-shrink-0 h-full flex items-center justify-center px-3.5 border-r border-gray-200 dark:border-gray-600 dark:bg-dark-700">
+                    <IdentificationIcon className="h-5 w-5 text-gray-500" />
+                </div>
+                <div className="flex-grow px-4 truncate">
+                    {displayValue ? (
+                        <span className="text-sm text-gray-700 dark:text-gray-200">{displayValue}</span>
                     ) : (
-                        <span className="text-gray-400 dark:text-gray-500">Click to add contact info</span>
+                        <span className="text-sm text-gray-400 dark:text-gray-500">Click to add contact info</span>
                     )}
-                </span>
+                </div>
             </div>
             {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
 
@@ -238,7 +241,7 @@ export default function ContactInfo({ value, onChange, error }: ContactInfoProps
                         
                         <div className="flex-grow overflow-y-auto space-y-5 pr-2">
                             {localContacts.map((channel, channelIndex) => (
-                                <div key={channel.id} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-dark-800/50">
+                                <div key={channel.id} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-25 dark:bg-dark-800/50">
                                     <div className="flex justify-end mb-2">
                                         <Button variant="ghost" size="icon" type="button" onClick={() => removeChannel(channelIndex)}>
                                             <XMarkIcon className="h-6 w-6 text-red-500 hover:text-red-600 transition-colors" />
@@ -284,9 +287,9 @@ export default function ContactInfo({ value, onChange, error }: ContactInfoProps
                                         ))}
                                     </div>
                                     <div className="mt-4 flex justify-end">
-                                        <Button size="xs" variant="ghost" type="button" onClick={() => addContactValue(channelIndex)} className="flex items-center gap-1 text-blue-600 hover:text-blue-700">
+                                        <Button size="xs" variant="ghost" type="button" onClick={() => addContactValue(channelIndex)} className="flex items-center gap-1 text-white hover:text-blue-50 p-2 rounded-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 shadow-md" tooltips="Click to add contact">
                                             <PlusIcon className="h-4 w-4"/>
-                                            Add Contact
+                                            {/* Add Contact */}
                                         </Button>
                                     </div>
                                 </div>

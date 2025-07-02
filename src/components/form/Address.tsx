@@ -4,9 +4,10 @@ import Button from "@/components/ui/button/Button";
 import Select from "@/components/form/Select";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
-import { Modal } from "@/components/ui/modal";
 import api from "@/lib/api";
 import formatApiDataForSelect from "@/lib/utils";
+import { MapPinIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import ComponentCard from "../common/ComponentCard";
 
 interface ISelectOption {
   value: string;
@@ -37,7 +38,7 @@ export default function Address({ value, onSave, error }: AddressProps) {
   const [villages, setVillages] = useState<ISelectOption[]>([]);
   const [errors, setErrors] = useState<Partial<Record<keyof IAddress, string>>>({});
 
-  const handleLocalChange = (field: keyof IAddress, fieldValue: ISelectOption | string | null) => {
+  const handleLocalChange = (field: keyof IAddress, fieldValue: any | null) => {
     setLocalAddress(prev => {
       const newState = { ...prev, [field]: fieldValue };
 
@@ -112,7 +113,7 @@ export default function Address({ value, onSave, error }: AddressProps) {
     setLocalAddress(value);
   }, [value]);
 
-const handleSaveClick = () => {
+  const handleSaveClick = () => {
     const newErrors: typeof errors = {};
     if (!localAddress.province) newErrors.province = "Province is required.";
     if (!localAddress.district) newErrors.district = "District is required.";
@@ -120,14 +121,14 @@ const handleSaveClick = () => {
     if (!localAddress.village) newErrors.village = "Village is required.";
 
     if (Object.keys(newErrors).length > 0) {
-        setErrors(newErrors);
-        return;
+      setErrors(newErrors);
+      return;
     }
 
     setErrors({});
     onSave(localAddress);
     setIsModalOpen(false);
-};
+  };
 
   const handleCancelClick = () => {
     setLocalAddress(value);
@@ -136,12 +137,12 @@ const handleSaveClick = () => {
   };
 
   const displayAddress = [
-    value.province?.label,
-    value.district?.label,
-    value.commune?.label,
-    value.village?.label,
     value.homeAddress,
-    value.streetAddress
+    value.streetAddress,
+    value.village?.label,
+    value.commune?.label,
+    value.district?.label,
+    value.province?.label,
   ]
     .filter(Boolean)
     .join(", ");
@@ -149,128 +150,109 @@ const handleSaveClick = () => {
   return (
     <div>
       <Label>Address</Label>
-      <button
+      <div
         onClick={() => setIsModalOpen(true)}
-        className={`flex w-full items-center justify-between gap-2 rounded-full border px-4 py-3 text-sm font-medium shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 ${
-          error 
-            ? "border-red-500 bg-red-50 text-red-700 dark:border-red-500 dark:bg-red-900/20 dark:text-red-400" 
-            : "border-gray-300 bg-white text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
-        }`}
+        className={`w-full border ${error ? "border-red-500" : "border-gray-300"
+          } rounded-md cursor-pointer bg-white dark:bg-dark-800 h-11 flex items-center overflow-hidden`}
       >
-        <span className="truncate text-left">
+        <div className="flex-shrink-0 h-full flex items-center justify-center px-3.5 border-r border-gray-200 dark:border-gray-600 dark:bg-dark-700">
+          <MapPinIcon className="h-5 w-5 text-gray-500" />
+        </div>
+        <div className="flex-grow px-4 truncate">
           {displayAddress ? (
-            <span className="text-gray-800 dark:text-gray-200">{displayAddress}</span>
+            <span className="text-sm text-gray-700 dark:text-gray-200">{displayAddress}</span>
           ) : (
-            <span className="text-gray-500 dark:text-gray-400">Click to select address</span>
+            <span className="text-sm text-gray-400 dark:text-gray-500">Click to select address</span>
           )}
-        </span>
-        <svg
-          className="fill-current flex-shrink-0"
-          width="18"
-          height="18"
-          viewBox="0 0 18 18"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            fillRule="evenodd"
-            clipRule="evenodd"
-            d="M15.0911 2.78206C14.2125 1.90338 12.7878 1.90338 11.9092 2.78206L4.57524 10.116C4.26682 10.4244 4.0547 10.8158 3.96468 11.2426L3.31231 14.3352C3.25997 14.5833 3.33653 14.841 3.51583 15.0203C3.69512 15.1996 3.95286 15.2761 4.20096 15.2238L7.29355 14.5714C7.72031 14.4814 8.11172 14.2693 8.42013 13.9609L15.7541 6.62695C16.6327 5.74827 16.6327 4.32365 15.7541 3.44497L15.0911 2.78206ZM12.9698 3.84272C13.2627 3.54982 13.7376 3.54982 14.0305 3.84272L14.6934 4.50563C14.9863 4.79852 14.9863 5.2734 14.6934 5.56629L14.044 6.21573L12.3204 4.49215L12.9698 3.84272ZM11.2597 5.55281L5.6359 11.1766C5.53309 11.2794 5.46238 11.4099 5.43238 11.5522L5.01758 13.5185L6.98394 13.1037C7.1262 13.0737 7.25666 13.003 7.35947 12.9002L12.9833 7.27639L11.2597 5.55281Z"
-            fill=""
-          />
-        </svg>
-      </button>
+        </div>
+      </div>
       {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
 
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => {
-          setLocalAddress(value);
-          setErrors({});
-          setIsModalOpen(false);
-        }}
-        className="max-w-[800px] p-4 lg:p-11"
-      >
-        <div className="px-2 lg:pr-14">
-          <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-            Select Address
-          </h4>
-          <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-            Choose or enter the address details for this location.
-          </p>
-        </div>
-          
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03] p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label>Province</Label>
-              <Select
-                options={provinces}
-                value={localAddress.province || undefined}
-                onChange={opt => handleLocalChange("province", opt)}
-              />
-              {errors.province && <p className="text-sm text-red-500 mt-1">{errors.province}</p>}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-grey/10 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-dark-900 p-6 rounded-lg shadow-xl w-full max-w-2xl">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">
+                Select Address
+              </h2>
+              <button type="button" onClick={handleCancelClick} className="p-2 rounded-full text-gray-400 bg-gray-50 dark:bg-gray-50 shadow-md">
+                <XMarkIcon className="h-6 w-6" />
+              </button>
             </div>
+            <div className="mb-3 border-b border-gray-200 dark:border-gray-700" />
+            <ComponentCard title="address" className="shadow-md">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Province</Label>
+                  <Select
+                    options={provinces}
+                    value={localAddress.province || undefined}
+                    onChange={opt => handleLocalChange("province", opt)}
+                  />
+                  {errors.province && <p className="text-sm text-red-500 mt-1">{errors.province}</p>}
+                </div>
 
-            <div>
-              <Label>District</Label>
-              <Select
-                options={districts}
-                value={localAddress.district || undefined}
-                onChange={opt => handleLocalChange("district", opt)}
-              />
-              {errors.district && <p className="text-sm text-red-500 mt-1">{errors.district}</p>}
-            </div>
+                <div>
+                  <Label>District</Label>
+                  <Select
+                    options={districts}
+                    value={localAddress.district || undefined}
+                    onChange={opt => handleLocalChange("district", opt)}
+                  />
+                  {errors.district && <p className="text-sm text-red-500 mt-1">{errors.district}</p>}
+                </div>
 
-            <div>
-              <Label>Commune</Label>
-              <Select
-                options={communes}
-                value={localAddress.commune || undefined}
-                onChange={opt => handleLocalChange("commune", opt)}
-              />
-              {errors.commune && <p className="text-sm text-red-500 mt-1">{errors.commune}</p>}
-            </div>
+                <div>
+                  <Label>Commune</Label>
+                  <Select
+                    options={communes}
+                    value={localAddress.commune || undefined}
+                    onChange={opt => handleLocalChange("commune", opt)}
+                  />
+                  {errors.commune && <p className="text-sm text-red-500 mt-1">{errors.commune}</p>}
+                </div>
 
-            <div>
-              <Label>Village</Label>
-              <Select
-                options={villages}
-                value={localAddress.village || undefined}
-                onChange={opt => handleLocalChange("village", opt)}
-              />
-              {errors.village && <p className="text-sm text-red-500 mt-1">{errors.village}</p>}
-            </div>
+                <div>
+                  <Label>Village</Label>
+                  <Select
+                    options={villages}
+                    value={localAddress.village || undefined}
+                    onChange={opt => handleLocalChange("village", opt)}
+                  />
+                  {errors.village && <p className="text-sm text-red-500 mt-1">{errors.village}</p>}
+                </div>
 
-            <div className="md:col-span-2">
-              <Label>Home Address</Label>
-              <Input
-                type="text"
-                placeholder="e.g., House #123"
-                value={localAddress.homeAddress}
-                onChange={e => handleLocalChange("homeAddress", e.target.value)}
-              />
-            </div>
+                <div className="md:col-span-2">
+                  <Label>Home Address</Label>
+                  <Input
+                    type="text"
+                    placeholder="e.g., House #123"
+                    value={localAddress.homeAddress}
+                    onChange={e => handleLocalChange("homeAddress", e.target.value)}
+                  />
+                </div>
 
-            <div className="md:col-span-2">
-              <Label>Street Address</Label>
-              <Input
-                type="text"
-                placeholder="e.g., Street 456"
-                value={localAddress.streetAddress}
-                onChange={e => handleLocalChange("streetAddress", e.target.value)}
-              />
+                <div className="md:col-span-2">
+                  <Label>Street Address</Label>
+                  <Input
+                    type="text"
+                    placeholder="e.g., Street 456"
+                    value={localAddress.streetAddress}
+                    onChange={e => handleLocalChange("streetAddress", e.target.value)}
+                  />
+                </div>
+              </div>
+            </ComponentCard>
+            <div className="mt-5 border-b border-gray-200 dark:border-gray-700 shadow-md" />
+            <div className="flex justify-end gap-4 mt-6">
+              <Button variant="outline" type="button" onClick={handleCancelClick}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={handleSaveClick}>Save Address</Button>
             </div>
           </div>
-          
         </div>
-                  <div className="flex justify-end gap-4 mt-6 pt-4  border-gray-200 dark:border-white/[0.05]">
-            <Button variant="outline" type="button" onClick={handleCancelClick}>
-              Cancel
-            </Button>
-            <Button type="button" onClick={handleSaveClick}>Save Address</Button>
-          </div>
-      </Modal>
+      )}
     </div>
   );
 }
