@@ -5,7 +5,7 @@ import Select from "@/components/form/Select";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import api from "@/lib/api";
-import formatApiDataForSelect from "@/lib/utils";
+import { formatApiDataForSelect } from "@/lib/utils";
 import { MapPinIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import ComponentCard from "../common/ComponentCard";
 

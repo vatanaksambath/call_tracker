@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import api from "@/lib/api"; 
+import { formatApiDataForSelect, parseDateString } from "@/lib/utils";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 import Button from "@/components/ui/button/Button";
@@ -10,8 +11,7 @@ import Label from "@/components/form/Label";
 import Select from "@/components/form/Select";
 import DatePicker from "@/components/form/date-picker";
 import TextArea from "@/components/form/input/TextArea";
-import { EnvelopeIcon, ChevronDownIcon } from "@/icons";
-import axios from "axios";
+import { ChevronDownIcon, EnvelopeIcon } from "@/icons";
 import Address, { IAddress } from "@/components/form/Address";
 import ContactInfo, { IContactChannel, IContactValue } from "@/components/form/ContactInfo";
 import ImageUpload from "@/components/form/ImageUpload";
@@ -23,14 +23,12 @@ interface SelectOption {
     label: string;
 }
 
-export default function CreateLeadPage() {
+export default function UpdateLeadPage() {
   const router = useRouter();
+  const params = useParams();
+  const leadId = params.id as string;
 
-  const breadcrumbs = [
-    { name: "Home", href: "/" },
-    { name: "Lead", href: "/lead" },
-    { name: "Create" },
-  ];
+  const breadcrumbs = [ { name: "Home", href: "/" }, { name: "Lead", href: "/lead" }, { name: "Update" }];
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -38,7 +36,6 @@ export default function CreateLeadPage() {
     gender: null as SelectOption | null,
     dob: null as Date | null,
     email: "",
-    phone: "",
     occupation: "",
     leadSource: null as SelectOption | null,
     contactDate: null as Date | null,
@@ -49,8 +46,11 @@ export default function CreateLeadPage() {
         homeAddress: "", streetAddress: ""
     } as IAddress,
     remark: "",
-    contact_data: [] as IContactChannel[],
+    contact_data: [] as IContactChannel[], 
     photo: null as File | null,
+    existingPhotoUrl: null as string | null,
+    initialStaffId: "",
+    currentStaffId: "",
   });
 
   type LeadFormErrors = {
@@ -67,7 +67,12 @@ export default function CreateLeadPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const fetchDropdownData = async () => {
+    if (!leadId) {
+        setIsLoading(false);
+        return;
+    };
+
+    const fetchInitialData = async () => {
       try {
         const [gender, business, leadSource, customerType, channelType] = await Promise.all([
           api.get('common/gender'),
@@ -76,6 +81,47 @@ export default function CreateLeadPage() {
           api.get('customer-type/customer-type'),
           api.get('channel-type/channel-type')
         ]);
+
+        const leadRes = await api.post('/lead/pagination', {
+          page_number: String("1"),
+          page_size: String("10"),
+          search_type: "lead_id",
+          query_search: String(`${leadId}`)
+        });
+
+        const leadData = leadRes.data[0];
+        const allChannelTypes = formatApiDataForSelect(channelType.data, 'channel_type_id', 'channel_type_name');
+        console.log(parseDateString(leadData.data[0].date_of_birth));
+        setFormData({
+            firstName: leadData.data[0].first_name || "",
+            lastName: leadData.data[0].last_name || "",
+            gender: { value: String(leadData.data[0].gender_id), label: leadData.data[0].gender_name },
+            dob: leadData.data[0].date_of_birth ? new Date(leadData.data[0].date_of_birth) : null,
+            email: leadData.data[0].email || "",
+            occupation: leadData.data[0].occupation || "",
+            leadSource: { value: String(leadData.data[0].lead_source_id), label: leadData.data[0].lead_source_name },
+            contactDate:  leadData.data[0].relationship_date ? new Date(leadData.data[0].relationship_date) : null,
+            customerType: { value: String(leadData.data[0].customer_type_id), label: leadData.data[0].customer_type_name },
+            business: { value: String(leadData.data[0].business_id), label: leadData.data[0].business_name },
+            address: {
+                province: leadData.data[0].province_id ? { value: String(leadData.data[0].province_id), label: leadData.data[0].province_name } : null,
+                district: leadData.data[0].district_id ? { value: String(leadData.data[0].district_id), label: leadData.data[0].district_name } : null,
+                commune: leadData.data[0].commune_id ? { value: String(leadData.data[0].commune_id), label: leadData.data[0].commune_name } : null,
+                village: leadData.data[0].village_id ? { value: String(leadData.data[0].village_id), label: leadData.data[0].village_name } : null,
+                homeAddress: leadData.data[0].home_address || "",
+                streetAddress: leadData.data[0].street_address || ""
+            },
+            contact_data: (leadData.data[0].contact_data || []).map((channel: any) => ({
+                id: Math.random(),
+                channel_type: allChannelTypes.find(ct => ct.value === String(channel.channel_type_id)) || null,
+                contact_values: (channel.contact_values || []).map((val: any) => ({ ...val, id: Math.random() }))
+            })),
+            photo: null,
+            existingPhotoUrl: leadData.photo_url,
+            remark: leadData.data[0].remark || "",
+            initialStaffId: leadData.data[0].initial_staff_id,
+            currentStaffId: leadData.data[0].current_staff_id
+        });
 
         const formattedGenders = gender.data.map((item: any) => ({
           value: String(item.gender_id),
@@ -111,18 +157,14 @@ export default function CreateLeadPage() {
         });
 
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          console.error("Unauthorized request. Token may be invalid or expired.");
-        } else {
-          console.error("Failed to fetch dropdown data:", error);
-        }
+        console.error("Failed to fetch initial data:", error);
       } finally {
-          setIsLoading(false);
+        setIsLoading(false);
       }
     };
 
-    fetchDropdownData();
-  }, []);
+    fetchInitialData();
+  }, [leadId]);
 
   const handleChange = (field: keyof typeof formData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -165,12 +207,12 @@ export default function CreateLeadPage() {
     return Object.keys(newErrors).length === 0;
   };
   
-  const handleSave = async () => { 
+  const handleUpdate = async () => { 
     if (!validate()) return;
     
     setIsSaving(true);
     try {
-        let photoUrl = null;
+        let photoUrl = formData.existingPhotoUrl;
         if (formData.photo) {
             const photoFormData = new FormData();
             photoFormData.append('file', formData.photo);
@@ -180,22 +222,18 @@ export default function CreateLeadPage() {
             photoUrl = uploadResponse.data.url;
         }
 
-        const contactDataGrouped = formData.contact_data.reduce((acc, channel) => {
-            if (channel.channel_type && channel.contact_values.length > 0) {
-                acc.push({
-                    channel_type_id: channel.channel_type.value,
-                    contact_values: channel.contact_values.map(val => ({
-                        user_name: val.user_name,
-                        contact_number: val.contact_number,
-                        remark: val.remark,
-                        is_primary: val.is_primary,
-                    }))
-                });
-            }
-            return acc;
-        }, [] as { channel_type_id: string; contact_values: Omit<IContactValue, 'id'>[] }[]);
+        const contactDataGrouped = formData.contact_data.map(channel => ({
+            channel_type_id: channel.channel_type?.value,
+            contact_values: channel.contact_values.map(val => ({
+                user_name: val.user_name,
+                contact_number: val.contact_number,
+                remark: val.remark,
+                is_primary: val.is_primary,
+            }))
+        }));
 
         const leadPayload = {
+            lead_id: String(`${leadId}`),
             first_name: formData.firstName,
             last_name: formData.lastName,
             gender_id: formData.gender?.value,
@@ -203,8 +241,8 @@ export default function CreateLeadPage() {
             lead_source_id: formData.leadSource?.value,
             village_id: formData.address.village?.value,
             business_id: formData.business?.value,
-            initial_staff_id: "1", 
-            current_staff_id: "1",
+            current_staff_id: formData.currentStaffId.toString(),
+            initial_staff_id: formData.initialStaffId.toString(),
             date_of_birth: formatDateForAPI(formData.dob),
             email: formData.email,
             occupation: formData.occupation,
@@ -215,23 +253,21 @@ export default function CreateLeadPage() {
             remark: formData.remark,
             photo_url: photoUrl,
             contact_data: contactDataGrouped,
+            is_active: true,
         };
 
-        await api.post('/lead/create', leadPayload);
+        await api.put(`/lead/update`, leadPayload);
         router.push("/lead");
 
     } catch (err) {
-        console.error("Failed to save lead:", err);
-        alert("An error occurred while saving the lead. Please try again.");
+        console.error("Failed to update lead:", err);
+        alert("An error occurred while updating the lead.");
     } finally {
         setIsSaving(false);
-        alert("save success")
     }
   };
 
   const handleCancel = () => { router.push("/lead"); };
-
-  const countries = [ { code: "KH", label: "+855" }, { code: "US", label: "+1" }];
 
   return (
     <>
@@ -239,13 +275,14 @@ export default function CreateLeadPage() {
       <div>
         <PageBreadcrumb crumbs={breadcrumbs} />
         <div className="space-y-6">
-          <form className="flex flex-col" noValidate onSubmit={(e) => { e.preventDefault(); handleSave() }}>
-            <ComponentCard title="Lead Information">
+          <form className="flex flex-col" noValidate onSubmit={(e) => { e.preventDefault(); handleUpdate() }}>
+            <ComponentCard title="Update Lead">     
               <div className="px-2 pb-2">
                 <div className="col-span-2 lg:col-span-3 pb-6">
                     <ImageUpload
                       value={formData.photo}
                       onChange={(file) => handleChange('photo', file)}
+                      initialPreviewUrl={formData.existingPhotoUrl}
                     />
                 </div>
                 <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-3 p-3 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-4 shadow-md">          
@@ -285,7 +322,7 @@ export default function CreateLeadPage() {
                   <div className="col-span-2 lg:col-span-1">
                     <ContactInfo
                       value={formData.contact_data}
-                      onChange={(newcontact_data) => handleChange('contact_data', newcontact_data)}                  
+                      onChange={(newcontact_data) => handleChange('contact_data', newcontact_data)}
                       error={errors.contact_data}
                     />
                   </div>
@@ -346,7 +383,7 @@ export default function CreateLeadPage() {
               <div className="flex items-center gap-3 mt-6 justify-end">
                 <Button size="md" variant="outline" type="button" onClick={handleCancel}>Cancel</Button>
                 <Button size="md" type="submit" disabled={isSaving}>
-                    {isSaving ? 'Saving...' : 'Save Lead'}
+                    {isSaving ? 'Updating...' : 'Update Lead'}
                 </Button>
               </div>
             </ComponentCard>

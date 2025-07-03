@@ -10,7 +10,7 @@ import {
 import Badge from "../ui/badge/Badge";
 import Image from "next/image";
 import { 
-    EyeIcon, PencilIcon, TrashIcon, EllipsisHorizontalIcon, 
+    EyeIcon, PencilIcon, TrashIcon, EllipsisVerticalIcon, 
     AdjustmentsHorizontalIcon, XMarkIcon, ChevronLeftIcon, 
     ChevronRightIcon, DocumentMagnifyingGlassIcon, UserCircleIcon, 
     CakeIcon, PhoneIcon, EnvelopeIcon, BriefcaseIcon, MapPinIcon, 
@@ -19,6 +19,7 @@ import {
 import Button from "../ui/button/Button";
 import api from "@/lib/api";
 import LoadingOverlay from "../ui/loading/LoadingOverlay";
+import { useRouter } from "next/navigation";
 
 interface ApiLeadData {
   lead_id: string;
@@ -97,7 +98,7 @@ const ActionMenu = ({ lead, onSelect }: { lead: Lead; onSelect: (action: 'view' 
     return (
         <div className="relative" ref={menuRef}>
             <button onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors">
-                <EllipsisHorizontalIcon className="h-5 w-5 text-gray-500" />
+                <EllipsisVerticalIcon className="h-5 w-5 text-gray-500" />
             </button>
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-dark-800 border border-gray-200 dark:border-white/[0.05] rounded-lg shadow-lg z-10">
@@ -238,47 +239,37 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: { currentPage: nu
         const pageLimit = 2;
         
         if (totalPages <= 1) return [];
-
         pages.push(1);
+        if (currentPage > pageLimit + 1) pages.push('...');
+        
+        const startPage = Math.max(2, currentPage - 1);
+        const endPage = Math.min(totalPages - 1, currentPage + 1);
 
-        if (currentPage > pageLimit + 1) {
-            pages.push('...');
-        }
+        for (let i = startPage; i <= endPage; i++) pages.push(i);
 
-        const startPage = Math.max(2, currentPage - pageLimit);
-        const endPage = Math.min(totalPages - 1, currentPage + pageLimit);
-
-        for (let i = startPage; i <= endPage; i++) {
-            pages.push(i);
-        }
-
-        if (currentPage < totalPages - pageLimit -1) {
-            pages.push('...');
-        }
-
-        if (totalPages > 1) {
-            pages.push(totalPages);
-        }
+        if (currentPage < totalPages - pageLimit -1) pages.push('...');
+        if (totalPages > 1 && !pages.includes(totalPages)) pages.push(totalPages);
         
         return [...new Set(pages)];
     };
 
     return (
-        <nav className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}><ChevronLeftIcon className="h-4 w-4" /></Button>
+        <nav className="flex items-center gap-1">
+            <Button variant="outline" size="icon" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1} className="h-8 w-8"><ChevronLeftIcon className="h-4 w-4" /></Button>
             {getPageNumbers().map((page, index) =>
                 typeof page === 'number' ? (
-                    <Button key={index} variant={currentPage === page ? 'outline' : 'default'} size="sm" onClick={() => onPageChange(page)} className="w-9">{page}</Button>
+                    <Button key={index} variant={currentPage === page ? 'default' : 'ghost'} size="icon" onClick={() => onPageChange(page)} className="h-8 w-8">{page}</Button>
                 ) : (
-                    <span key={index} className="px-2 py-1 text-sm">...</span>
+                    <span key={index} className="flex items-center justify-center h-8 w-8 text-sm text-gray-500">...</span>
                 )
             )}
-            <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}><ChevronRightIcon className="h-4 w-4" /></Button>
+            <Button variant="outline" size="icon" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages} className="h-8 w-8"><ChevronRightIcon className="h-4 w-4" /></Button>
         </nav>
     );
 };
 
 export default function LeadsTable() {
+    const router = useRouter();
     const [leads, setLeads] = useState<Lead[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
@@ -365,6 +356,8 @@ export default function LeadsTable() {
     const handleActionSelect = (action: 'view' | 'edit' | 'delete', lead: Lead) => {
         if (action === 'view') {
             setSelectedLead(lead);
+        } else if (action === 'edit') {
+            router.push(`/lead/update/${lead.id}`);
         } else {
             console.log(`${action} lead ${lead.id}`);
         }
@@ -401,56 +394,54 @@ export default function LeadsTable() {
     return (
         <>
             <LoadingOverlay isLoading={isLoading} />
-            <div className="rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-                <div className="p-2 flex justify-end">
+            <div className="rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03] flex flex-col h-full">
+                <div className="p-2 flex-shrink-0 flex justify-end">
                     <ColumnSelector visibleColumns={visibleColumns} setVisibleColumns={setVisibleColumns} />
                 </div>
-                <div className="overflow-x-auto">
-                    <div className="min-w-[1000px] min-h-[26vh]">
-                        <Table>
-                            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+                <div className="overflow-auto flex-grow">
+                    <Table className="min-w-[1000px]">
+                        <TableHeader className="border-b border-gray-100 dark:border-white/[0.05] sticky top-0 bg-white dark:bg-dark-800 z-10">
+                            <TableRow>
+                                {sortedVisibleColumns.map(col => (
+                                    <TableCell key={col.key} isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                                        {col.label}
+                                    </TableCell>
+                                ))}
+                                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-center text-theme-xs dark:text-gray-400">Action</TableCell>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+                            {leads.length === 0 && !isLoading ? (
                                 <TableRow>
-                                    {sortedVisibleColumns.map(col => (
-                                        <TableCell key={col.key} isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                                            {col.label}
-                                        </TableCell>
-                                    ))}
-                                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-center text-theme-xs dark:text-gray-400">Action</TableCell>
+                                    <TableCell
+                                        colSpan={sortedVisibleColumns.length + 1}
+                                        className="h-full"
+                                    >
+                                        <div className="flex flex-col items-center justify-center h-full w-full text-center text-gray-400 gap-2 py-10">
+                                        <DocumentMagnifyingGlassIcon className="h-12 w-12" />
+                                        <span className="font-medium">No leads found.</span>
+                                        <span className="text-sm">There might be a connection issue!!!</span>
+                                        </div>
+                                    </TableCell>
                                 </TableRow>
-                            </TableHeader>
-                            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                                {leads.length === 0 && !isLoading ? (
-                                    <TableRow>
-                                        <TableCell
-                                            colSpan={sortedVisibleColumns.length + 1}
-                                            className="h-[300px] px-5 py-4"
-                                        >
-                                            <div className="flex flex-col items-center justify-center h-full w-full text-center text-gray-400 gap-2">
-                                            <DocumentMagnifyingGlassIcon className="h-12 w-12" />
-                                            <span className="font-medium">No leads found.</span>
-                                            <span className="text-sm">There might be a connection issue!!!</span>
-                                            </div>
-                                        </TableCell>
-                                        </TableRow>
-                                ) : (
-                                    leads.map((lead) => (
-                                        <TableRow key={lead.id}>
-                                            {sortedVisibleColumns.map(col => (
-                                                <TableCell key={`${lead.id}-${col.key}`} className="px-5 py-4 text-start text-theme-sm">
-                                                    {renderCellContent(lead, col.key)}
-                                                </TableCell>
-                                            ))}
-                                            <TableCell className="px-4 py-3 text-center">
-                                                <ActionMenu lead={lead} onSelect={handleActionSelect} />
+                            ) : (
+                                leads.map((lead) => (
+                                    <TableRow key={lead.id}>
+                                        {sortedVisibleColumns.map(col => (
+                                            <TableCell key={`${lead.id}-${col.key}`} className="px-5 py-4 text-start text-theme-sm">
+                                                {renderCellContent(lead, col.key)}
                                             </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
+                                        ))}
+                                        <TableCell className="px-4 py-3 text-center">
+                                            <ActionMenu lead={lead} onSelect={handleActionSelect} />
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
                 </div>
-                <div className="p-4 flex justify-between items-center">
+                <div className="p-4 flex-shrink-0 flex justify-between items-center">
                     <span className="text-sm text-gray-600">Showing {leads.length} of {totalRows} results</span>
                     <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
                 </div>

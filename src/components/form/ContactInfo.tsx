@@ -7,7 +7,7 @@ import Label from "@/components/form/Label";
 import { PlusIcon, TrashIcon, XMarkIcon, IdentificationIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "@/icons";
 import api from "@/lib/api";
-import formatApiDataForSelect from "@/lib/utils"; 
+import { formatApiDataForSelect } from "@/lib/utils"; 
 
 export interface IContactValue {
     id: number;
@@ -287,7 +287,7 @@ export default function ContactInfo({ value, onChange, error }: ContactInfoProps
                                         ))}
                                     </div>
                                     <div className="mt-4 flex justify-end">
-                                        <Button size="xs" variant="ghost" type="button" onClick={() => addContactValue(channelIndex)} className="flex items-center gap-1 text-white hover:text-blue-50 p-2 rounded-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 shadow-md" tooltips="Click to add contact">
+                                        <Button size="xs" variant="ghost" type="button" onClick={() => addContactValue(channelIndex)} className="flex items-center gap-1 text-white hover:text-blue-50 p-2 rounded-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 shadow-md">
                                             <PlusIcon className="h-4 w-4"/>
                                             {/* Add Contact */}
                                         </Button>
