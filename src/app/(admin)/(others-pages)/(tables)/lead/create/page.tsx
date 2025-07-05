@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import api from "@/lib/api"; 
+import api, { getUserFromToken } from "@/lib/api"; 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 import Button from "@/components/ui/button/Button";
@@ -17,6 +17,7 @@ import ContactInfo, { IContactChannel, IContactValue } from "@/components/form/C
 import ImageUpload from "@/components/form/ImageUpload";
 import LoadingOverlay from "@/components/ui/loading/LoadingOverlay";
 import { formatDateForAPI } from "@/lib/utils";
+import Alert from "@/components/ui/alert/Alert";
 
 interface SelectOption {
     value: string;
@@ -65,6 +66,7 @@ export default function CreateLeadPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [alertInfo, setAlertInfo] = useState<{variant: "success" | "error", title: string, message: string} | null>(null);
 
   useEffect(() => {
     const fetchDropdownData = async () => {
@@ -166,7 +168,17 @@ export default function CreateLeadPage() {
   };
   
   const handleSave = async () => { 
-    if (!validate()) return;
+    const tokenUser = getUserFromToken();
+    if (!validate() || !tokenUser?.user_id) {
+        if (!tokenUser?.user_id) {
+            setAlertInfo({ 
+                variant: 'error', 
+                title: 'Authentication Error', 
+                message: 'Could not find user information. Please log in again.' 
+            });
+        }
+        return;
+    }
     
     setIsSaving(true);
     try {
@@ -195,6 +207,8 @@ export default function CreateLeadPage() {
             return acc;
         }, [] as { channel_type_id: string; contact_values: Omit<IContactValue, 'id'>[] }[]);
 
+        const tokenUser = getUserFromToken();
+
         const leadPayload = {
             first_name: formData.firstName,
             last_name: formData.lastName,
@@ -203,8 +217,8 @@ export default function CreateLeadPage() {
             lead_source_id: formData.leadSource?.value,
             village_id: formData.address.village?.value,
             business_id: formData.business?.value,
-            initial_staff_id: "1", 
-            current_staff_id: "1",
+            initial_staff_id: tokenUser?.user_id, 
+            current_staff_id: tokenUser?.user_id,
             date_of_birth: formatDateForAPI(formData.dob),
             email: formData.email,
             occupation: formData.occupation,
@@ -217,25 +231,36 @@ export default function CreateLeadPage() {
             contact_data: contactDataGrouped,
         };
 
-        await api.post('/lead/create', leadPayload);
-        router.push("/lead");
-
+        const createLead = await api.post('/lead/create', leadPayload);
+        if(createLead.data[0].statusCode = 200) {
+          setAlertInfo({ variant: 'success', title: 'Success!', message: 'Lead has been created successfully.' })
+          setTimeout(() => {
+            router.push("/lead");
+          }, 3000);
+        }
     } catch (err) {
         console.error("Failed to save lead:", err);
-        alert("An error occurred while saving the lead. Please try again.");
+        setAlertInfo({ variant: 'error', title: 'Save Failed', message: 'An error occurred while saving the lead. Please try again.' });
     } finally {
         setIsSaving(false);
-        alert("save success")
     }
   };
 
   const handleCancel = () => { router.push("/lead"); };
 
-  const countries = [ { code: "KH", label: "+855" }, { code: "US", label: "+1" }];
-
   return (
     <>
       <LoadingOverlay isLoading={isLoading || isSaving} />
+      {alertInfo && (
+        <div className="fixed top-5 right-5 z-[10000] w-full max-w-sm">
+            <Alert 
+                variant={alertInfo.variant}
+                title={alertInfo.title}
+                message={alertInfo.message}
+                onClose={() => setAlertInfo(null)}
+            />
+        </div>
+      )}
       <div>
         <PageBreadcrumb crumbs={breadcrumbs} />
         <div className="space-y-6">
@@ -338,7 +363,7 @@ export default function CreateLeadPage() {
                   </div>
                   <div className="col-span-2 lg:col-span-3">
                     <Label>Remark</Label>
-                    <TextArea value={formData.remark} onChange={(value) => handleChange("remark", value)} rows={3} />
+                    <TextArea value={formData.remark} onChange={(value) => handleChange("remark", value)} rows={3}/>
                   </div>
                 </div>
               </div>

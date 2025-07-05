@@ -17,6 +17,7 @@ import ContactInfo, { IContactChannel, IContactValue } from "@/components/form/C
 import ImageUpload from "@/components/form/ImageUpload";
 import LoadingOverlay from "@/components/ui/loading/LoadingOverlay";
 import { formatDateForAPI } from "@/lib/utils";
+import Alert from "@/components/ui/alert/Alert";
 
 interface SelectOption {
     value: string;
@@ -65,6 +66,7 @@ export default function UpdateLeadPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [alertInfo, setAlertInfo] = useState<{variant: "success" | "error", title: string, message: string} | null>(null);
 
   useEffect(() => {
     if (!leadId) {
@@ -208,7 +210,10 @@ export default function UpdateLeadPage() {
   };
   
   const handleUpdate = async () => { 
-    if (!validate()) return;
+    if (!validate() || !formData.currentStaffId.toString()) {
+      if(!formData.currentStaffId.toString()) setAlertInfo({ variant: 'error', title: 'Authentication Error', message: 'Could not find user information. Please log in again.' });
+      return;
+    }
     
     setIsSaving(true);
     try {
@@ -256,12 +261,16 @@ export default function UpdateLeadPage() {
             is_active: true,
         };
 
-        await api.put(`/lead/update`, leadPayload);
-        router.push("/lead");
-
+        const createLead = await api.put(`/lead/update`, leadPayload);
+        if(createLead.data[0].statusCode = 200) {
+          setAlertInfo({ variant: 'success', title: 'Success!', message: 'Lead has been updated successfully.' })
+          setTimeout(() => {
+            router.push("/lead");
+          }, 3000);
+        }
     } catch (err) {
         console.error("Failed to update lead:", err);
-        alert("An error occurred while updating the lead.");
+        setAlertInfo({ variant: 'error', title: 'Save Failed', message: 'An error occurred while updating the lead. Please try again.' });
     } finally {
         setIsSaving(false);
     }
@@ -272,6 +281,16 @@ export default function UpdateLeadPage() {
   return (
     <>
       <LoadingOverlay isLoading={isLoading || isSaving} />
+      {alertInfo && (
+        <div className="fixed top-5 right-5 z-[10000] w-full max-w-sm">
+            <Alert 
+                variant={alertInfo.variant}
+                title={alertInfo.title}
+                message={alertInfo.message}
+                onClose={() => setAlertInfo(null)}
+            />
+        </div>
+      )}
       <div>
         <PageBreadcrumb crumbs={breadcrumbs} />
         <div className="space-y-6">
@@ -375,7 +394,7 @@ export default function UpdateLeadPage() {
                   </div>
                   <div className="col-span-2 lg:col-span-3">
                     <Label>Remark</Label>
-                    <TextArea value={formData.remark} onChange={(value) => handleChange("remark", value)} rows={3} />
+                    <TextArea value={formData.remark} onChange={(value) => handleChange("remark", value)} rows={3} className="text-black"/>
                   </div>
                 </div>
               </div>

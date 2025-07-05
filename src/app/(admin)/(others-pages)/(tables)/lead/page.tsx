@@ -3,9 +3,10 @@ import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import LeadsTable from "@/components/tables/LeadsTable";
 import { Metadata } from "next";
-import React from "react";
+import React, { useState } from "react";
 import Button from "@/components/ui/button/Button";
 import Link from "next/link";
+import SearchComponent from "@/components/common/SearchComponent";
 
 const breadcrumbs = [
     { name: "Home", href: "/" },
@@ -13,20 +14,26 @@ const breadcrumbs = [
   ];
 
 export default function LeadsPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchType, setSearchType] = useState("lead_id");
+
+  const handleSearch = (query: string, type: string) => {
+    setSearchQuery(query);
+    setSearchType(type);
+  };
+  
   return (
     <div>
       <PageBreadcrumb crumbs={breadcrumbs} />
       <div className="space-y-6">
         <ComponentCard title="Leads">
-          <div className="flex items-center gap-3">
-            <Link href="/lead/create">
+          <div className="flex items-center gap-3 justify-between">
+            <Link href="/lead/create" className="block w-full md:w-auto">
               <Button size="md" variant="primary">
                 Add Lead +
               </Button>
-            </Link>
-            {/* <Button size="md" variant="outline">
-              Edit Lead
-            </Button> */}
+            </Link>          
+            <SearchComponent onSearch={handleSearch} />
           </div>
           <LeadsTable />
         </ComponentCard>
