@@ -35,7 +35,7 @@ export default function LeadsPage() {
             </Link>          
             <SearchComponent onSearch={handleSearch} />
           </div>
-          <LeadsTable />
+          <LeadsTable searchQuery={searchQuery} searchType={searchType} />
         </ComponentCard>
       </div>
     </div>

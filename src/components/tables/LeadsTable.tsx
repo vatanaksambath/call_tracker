@@ -10,7 +10,7 @@ import {
 import Badge from "../ui/badge/Badge";
 import Image from "next/image";
 import { 
-    EyeIcon, PencilIcon, TrashIcon, EllipsisVerticalIcon, 
+    EyeIcon, PencilIcon, TrashIcon, EllipsisHorizontalIcon, 
     AdjustmentsHorizontalIcon, XMarkIcon, ChevronLeftIcon, 
     ChevronRightIcon, DocumentMagnifyingGlassIcon, UserCircleIcon, 
     CakeIcon, PhoneIcon, EnvelopeIcon, BriefcaseIcon, MapPinIcon, 
@@ -51,7 +51,7 @@ interface ApiLeadData {
 }
 
 interface Lead {
-  id: string;
+  leadId: string;
   fullName: string;
   avatar: string;
   gender: string;
@@ -68,8 +68,14 @@ interface Lead {
   raw: ApiLeadData;
 }
 
+interface LeadsTableProps {
+    searchQuery: string;
+    searchType: string;
+}
+
 const allColumns: { key: keyof Lead; label: string }[] = [
     { key: 'fullName', label: 'Full Name' },
+    { key: 'leadId', label: 'Lead ID' },
     { key: 'gender', label: 'Gender' },
     { key: 'phone', label: 'Primary Phone' },
     { key: 'dob', label: 'Date of Birth' },
@@ -98,7 +104,7 @@ const ActionMenu = ({ lead, onSelect }: { lead: Lead; onSelect: (action: 'view' 
     return (
         <div className="relative" ref={menuRef}>
             <button onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors">
-                <EllipsisVerticalIcon className="h-5 w-5 text-gray-500" />
+                <EllipsisHorizontalIcon className="h-5 w-5 text-gray-500" />
             </button>
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-dark-800 border border-gray-200 dark:border-white/[0.05] rounded-lg shadow-lg z-10">
@@ -163,75 +169,119 @@ const ColumnSelector = ({ visibleColumns, setVisibleColumns }: { visibleColumns:
     );
 };
 
-const ViewLeadModal = ({ lead, onClose }: { lead: Lead | null; onClose: () => void; }) => {
+const ViewLeadModal = ({
+    lead,
+    onClose,
+  }: {
+    lead: Lead | null;
+    onClose: () => void;
+  }) => {
     if (!lead) return null;
-
-    const DetailItem = ({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: React.ReactNode }) => (
-        <div className="flex items-start gap-3">
-            <Icon className="h-5 w-5 text-gray-400 mt-0.5" />
-            <div>
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</p>
-                <p className="text-sm text-gray-800 dark:text-gray-100">{value}</p>
-            </div>
+  
+    const DetailItem = ({
+      icon: Icon,
+      label,
+      value,
+    }: {
+      icon: React.ElementType;
+      label: string;
+      value: React.ReactNode;
+    }) => (
+      <div className="flex items-start gap-3">
+        <Icon className="h-5 w-5 text-primary-500 mt-0.5" />
+        <div>
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            {label}
+          </p>
+          <p className="text-sm text-gray-800 dark:text-gray-100 font-medium">
+            {value || "-"}
+          </p>
         </div>
+      </div>
     );
-
+  
     return (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-dark-800 p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col border border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between items-center pb-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-50">Lead Information</h2>
-                    <Button variant="ghost" size="icon" onClick={onClose}>
-                        <XMarkIcon className="h-6 w-6 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200" />
-                    </Button>
+      <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+        <div className="bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col border border-gray-100 dark:border-zinc-700 transition-all duration-300">
+          <div className="flex justify-between items-center pb-4 border-b border-gray-200 dark:border-zinc-700">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              Lead Information
+            </h2>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <XMarkIcon className="h-6 w-6 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition" />
+            </Button>
+          </div>
+  
+          <div className="flex-grow overflow-y-auto mt-6 pr-2">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-1 lg:border-r lg:pr-6 border-gray-200 dark:border-zinc-700">
+                <div className="flex flex-col items-center text-center space-y-3">
+                  <Image
+                    src={lead.avatar}
+                    alt={lead.fullName}
+                    width={128}
+                    height={128}
+                    className="rounded-full object-cover bg-gray-200"
+                    onError={(e) => {
+                      e.currentTarget.src = "/images/user/user-02.jpg";
+                    }}
+                  />
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white uppercase tracking-wide">
+                    {lead.fullName}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {lead.leadId}
+                  </p>
+                  <Badge
+                    size="md"
+                    color={lead.status === "Active" ? "success" : "error"}
+                    className="mt-1 px-3 py-1 text-xs rounded-full"
+                  >
+                    {lead.status}
+                  </Badge>
                 </div>
-                
-                <div className="flex-grow overflow-y-auto mt-6 pr-2">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div className="lg:col-span-1 lg:border-r lg:pr-6 border-gray-200 dark:border-gray-700">
-                            <div className="flex flex-col items-center text-center">
-                                <Image src={lead.avatar} alt={lead.fullName} width={128} height={128} className="rounded-full bg-gray-200 mb-4" onError={(e) => { e.currentTarget.src = "/images/user/user-02.jpg"; }}/>
-                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white uppercase">{lead.fullName}</h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">{lead.email}</p>
-                                <div className="mt-2">
-                                    <Badge size="md" color={lead.status === "Active" ? "success" : "error"}>{lead.status}</Badge>
-                                </div>
-                            </div>
-                        </div>
+              </div>
 
-                        <div className="lg:col-span-2 space-y-6">
-                            <div>
-                                <h4 className="font-semibold mb-3 text-gray-700 dark:text-gray-300">Personal Details</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <DetailItem icon={UserCircleIcon} label="Gender" value={lead.gender} />
-                                    <DetailItem icon={PhoneIcon} label="Primary Phone" value={lead.phone} />
-                                    <DetailItem icon={CakeIcon} label="Date of Birth" value={lead.dob} />
-                                    <DetailItem icon={BriefcaseIcon} label="Occupation" value={lead.occupation} />
-                                </div>
-                            </div>
-                             <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                                <h4 className="font-semibold mb-3 text-gray-700 dark:text-gray-300">Lead Information</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <DetailItem icon={TagIcon} label="Lead Source" value={lead.leadSource} />
-                                    <DetailItem icon={InformationCircleIcon} label="Customer Type" value={lead.customerType} />
-                                    <DetailItem icon={BuildingOffice2Icon} label="Business" value={lead.business} />
-                                    <DetailItem icon={CalendarDaysIcon} label="Contact Date" value={lead.contactDate} />
-                                </div>
-                            </div>
-                            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                                <DetailItem icon={MapPinIcon} label="Address" value={lead.address} />
-                            </div>
-                        </div>
-                    </div>
+              <div className="lg:col-span-2 space-y-8">
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
+                    Personal Details
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <DetailItem icon={UserCircleIcon} label="Gender" value={lead.gender} />
+                    <DetailItem icon={PhoneIcon} label="Primary Phone" value={lead.phone} />
+                    <DetailItem icon={CakeIcon} label="Date of Birth" value={lead.dob} />
+                    <DetailItem icon={BriefcaseIcon} label="Occupation" value={lead.occupation} />
+                  </div>
                 </div>
-
-                <div className="mt-8 flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <Button variant="outline" onClick={onClose}>Close</Button>
+                <div className="border-t border-gray-200 dark:border-zinc-700 pt-6">
+                  <h4 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
+                    Lead Information
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <DetailItem icon={TagIcon} label="Lead Source" value={lead.leadSource} />
+                    <DetailItem icon={InformationCircleIcon} label="Customer Type" value={lead.customerType} />
+                    <DetailItem icon={BuildingOffice2Icon} label="Business" value={lead.business} />
+                    <DetailItem icon={CalendarDaysIcon} label="Contact Date" value={lead.contactDate} />
+                  </div>
                 </div>
+                <div className="border-t border-gray-200 dark:border-zinc-700 pt-6">
+                  <DetailItem icon={MapPinIcon} label="Address" value={lead.address} />
+                </div>
+              </div>
             </div>
+          </div>
+  
+          {/* Footer */}
+          <div className="mt-8 flex justify-end pt-4 border-t border-gray-200 dark:border-zinc-700">
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
+          </div>
         </div>
+      </div>
     );
-};
+  };
 
 const Pagination = ({ currentPage, totalPages, onPageChange }: { currentPage: number, totalPages: number, onPageChange: (page: number) => void }) => {
     const getPageNumbers = () => {
@@ -258,7 +308,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: { currentPage: nu
             <Button variant="outline" size="icon" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1} className="h-8 w-8"><ChevronLeftIcon className="h-4 w-4" /></Button>
             {getPageNumbers().map((page, index) =>
                 typeof page === 'number' ? (
-                    <Button key={index} variant={currentPage === page ? 'default' : 'ghost'} size="icon" onClick={() => onPageChange(page)} className="h-8 w-8">{page}</Button>
+                    <Button key={index} variant={currentPage === page ? 'ghost' : 'ghost'} size="icon" onClick={() => onPageChange(page)} className="h-8 w-8">{page}</Button>
                 ) : (
                     <span key={index} className="flex items-center justify-center h-8 w-8 text-sm text-gray-500">...</span>
                 )
@@ -268,7 +318,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: { currentPage: nu
     );
 };
 
-export default function LeadsTable() {
+export default function LeadsTable({ searchQuery, searchType }: LeadsTableProps) {
     const router = useRouter();
     const [leads, setLeads] = useState<Lead[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -279,7 +329,7 @@ export default function LeadsTable() {
     const [visibleColumns, setVisibleColumns] = useState<(keyof Lead)[]>(() => {
         try {
             const savedColumns = localStorage.getItem('leadsTableVisibleColumns');
-            return savedColumns ? JSON.parse(savedColumns) : ['fullName', 'phone', 'contactDate', 'status'];
+            return savedColumns ? JSON.parse(savedColumns) : ['fullName', 'gender', 'dob', 'phone', 'contactDate', 'status'];
         } catch (error) {
             return ['fullName', 'phone', 'contactDate', 'status'];
         }
@@ -288,14 +338,18 @@ export default function LeadsTable() {
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
     useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, searchType]);
+
+    useEffect(() => {
         const fetchLeads = async () => {
             setIsLoading(true);
             try {
                 const response = await api.post('/lead/pagination', {
                     page_number: String(currentPage),
                     page_size: String(pageSize),
-                    search_type: "",
-                    query_search: ""
+                    search_type: searchType,
+                    query_search: searchQuery
                 });
                 
                 const apiResult = response.data[0];
@@ -312,7 +366,7 @@ export default function LeadsTable() {
                         ].filter(Boolean).join(', ');
 
                         return {
-                            id: lead.lead_id,
+                            leadId: lead.lead_id,
                             fullName: `${lead.first_name} ${lead.last_name}`,
                             avatar: lead.photo_url || "/images/user/user-02.jpg",
                             gender: lead.gender_name,
@@ -347,7 +401,7 @@ export default function LeadsTable() {
         };
 
         fetchLeads();
-    }, [currentPage, pageSize]);
+    }, [currentPage, pageSize, searchType, searchQuery]);
 
     useEffect(() => {
         localStorage.setItem('leadsTableVisibleColumns', JSON.stringify(visibleColumns));
@@ -357,9 +411,9 @@ export default function LeadsTable() {
         if (action === 'view') {
             setSelectedLead(lead);
         } else if (action === 'edit') {
-            router.push(`/lead/update/${lead.id}`);
+            router.push(`/lead/update/${lead.leadId}`);
         } else {
-            console.log(`${action} lead ${lead.id}`);
+            console.log(`${action} lead ${lead.leadId}`);
         }
     };
 
@@ -373,7 +427,7 @@ export default function LeadsTable() {
                         </div>
                         <div>
                             <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">{lead.fullName}</span>
-                            <span className="block text-gray-500 text-theme-xs dark:text-gray-400">{lead.email}</span>
+                            <span className="block text-gray-500 text-theme-xs dark:text-gray-400">{lead.leadId}</span>
                         </div>
                     </div>
                 );
@@ -384,7 +438,11 @@ export default function LeadsTable() {
                     </Badge>
                 );
             default:
-                return <span className="text-gray-600 dark:text-gray-400">{lead[columnKey]}</span>;
+                return  <span className="text-gray-600 dark:text-gray-400">
+                            {typeof lead[columnKey] === 'string' || typeof lead[columnKey] === 'number'
+                            ? lead[columnKey]
+                            : ''}
+                        </span>;
         }
     };
 
@@ -426,9 +484,9 @@ export default function LeadsTable() {
                                 </TableRow>
                             ) : (
                                 leads.map((lead) => (
-                                    <TableRow key={lead.id}>
+                                    <TableRow key={lead.leadId}>
                                         {sortedVisibleColumns.map(col => (
-                                            <TableCell key={`${lead.id}-${col.key}`} className="px-5 py-4 text-start text-theme-sm">
+                                            <TableCell key={`${lead.leadId}-${col.key}`} className="px-5 py-4 text-start text-theme-sm">
                                                 {renderCellContent(lead, col.key)}
                                             </TableCell>
                                         ))}

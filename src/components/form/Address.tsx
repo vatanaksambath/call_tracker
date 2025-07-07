@@ -175,7 +175,7 @@ export default function Address({ value, onSave, error }: AddressProps) {
               <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">
                 Select Address
               </h2>
-              <button type="button" onClick={handleCancelClick} className="p-2 rounded-full text-gray-400 bg-gray-50 dark:bg-gray-50 shadow-md">
+              <button type="button" onClick={handleCancelClick} className="p-2 rounded-full text-gray-400 bg-gray-50 dark:bg-gray-50 shadow-md hover:bg-gray-100 hover:text-gray-600">
                 <XMarkIcon className="h-6 w-6" />
               </button>
             </div>

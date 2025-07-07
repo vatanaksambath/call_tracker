@@ -93,7 +93,6 @@ export default function UpdateLeadPage() {
 
         const leadData = leadRes.data[0];
         const allChannelTypes = formatApiDataForSelect(channelType.data, 'channel_type_id', 'channel_type_name');
-        console.log(parseDateString(leadData.data[0].date_of_birth));
         setFormData({
             firstName: leadData.data[0].first_name || "",
             lastName: leadData.data[0].last_name || "",
@@ -119,7 +118,7 @@ export default function UpdateLeadPage() {
                 contact_values: (channel.contact_values || []).map((val: any) => ({ ...val, id: Math.random() }))
             })),
             photo: null,
-            existingPhotoUrl: leadData.photo_url,
+            existingPhotoUrl: leadData.data[0].photo_url,
             remark: leadData.data[0].remark || "",
             initialStaffId: leadData.data[0].initial_staff_id,
             currentStaffId: leadData.data[0].current_staff_id
@@ -220,11 +219,13 @@ export default function UpdateLeadPage() {
         let photoUrl = formData.existingPhotoUrl;
         if (formData.photo) {
             const photoFormData = new FormData();
-            photoFormData.append('file', formData.photo);
-            const uploadResponse = await api.post('/upload/image', photoFormData, {
+            photoFormData.append('photo', formData.photo);
+            photoFormData.append('menu', 'lead');
+            photoFormData.append('photoId', String(`${leadId}`));
+            const uploadResponse = await api.post('/files/upload-one-photo', photoFormData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            photoUrl = uploadResponse.data.url;
+            photoUrl = uploadResponse.data.imageUrl;
         }
 
         const contactDataGrouped = formData.contact_data.map(channel => ({

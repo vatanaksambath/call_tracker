@@ -29,15 +29,14 @@ const SearchComponent: React.FC<SearchProps> = ({ onSearch }) => {
       
       <div className="relative border-r border-gray-200 dark:border-gray-700 h-full">
         <div className="flex items-center h-full px-3 text-sm text-gray-700 dark:text-gray-300">
-          {/* On small screens, show a filter icon. On larger screens, show the text label. */}
-          <FunnelIcon className="h-5 w-5 text-gray-400 sm:hidden" />
+          {/* <FunnelIcon className="h-5 w-5 text-gray-400 sm:hidden" /> */}
           <span className="hidden sm:inline">{type.label}</span>
           <ChevronDownIcon className="h-4 w-4 ml-2 text-gray-400" />
         </div>
         <Select 
             options={searchOptions}
             value={type}
-            onChange={(option) => setType(option)}
+            onChange={(option) => option && setType(option)}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
       </div>

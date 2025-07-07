@@ -185,11 +185,12 @@ export default function CreateLeadPage() {
         let photoUrl = null;
         if (formData.photo) {
             const photoFormData = new FormData();
-            photoFormData.append('file', formData.photo);
-            const uploadResponse = await api.post('/upload/image', photoFormData, {
+            photoFormData.append('photo', formData.photo);
+            photoFormData.append('menu', 'lead');
+            const uploadResponse = await api.post('/files/upload-one-photo', photoFormData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            photoUrl = uploadResponse.data.url;
+            photoUrl = uploadResponse.data.imageUrl;
         }
 
         const contactDataGrouped = formData.contact_data.reduce((acc, channel) => {
@@ -239,7 +240,7 @@ export default function CreateLeadPage() {
           }, 3000);
         }
     } catch (err) {
-        console.error("Failed to save lead:", err);
+        setAlertInfo({ variant: 'error', title: 'Save Failed', message: String(err)});
         setAlertInfo({ variant: 'error', title: 'Save Failed', message: 'An error occurred while saving the lead. Please try again.' });
     } finally {
         setIsSaving(false);
