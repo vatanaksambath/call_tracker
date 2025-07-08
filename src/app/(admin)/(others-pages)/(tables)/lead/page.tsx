@@ -26,7 +26,7 @@ export default function LeadsPage() {
     <div>
       <PageBreadcrumb crumbs={breadcrumbs} />
       <div className="space-y-6">
-        <ComponentCard title="Leads">
+        <ComponentCard title="">
           <div className="flex items-center gap-3 justify-between">
             <Link href="/lead/create" className="block w-full md:w-auto">
               <Button size="md" variant="primary">

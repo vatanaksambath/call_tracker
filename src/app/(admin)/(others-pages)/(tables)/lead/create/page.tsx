@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api, { getUserFromToken } from "@/lib/api"; 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import ComponentCard from "@/components/common/ComponentCard";
+import ComponentCardInput from "@/components/common/ComponentCardInput";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
@@ -17,7 +17,7 @@ import ContactInfo, { IContactChannel, IContactValue } from "@/components/form/C
 import ImageUpload from "@/components/form/ImageUpload";
 import LoadingOverlay from "@/components/ui/loading/LoadingOverlay";
 import { formatDateForAPI } from "@/lib/utils";
-import Alert from "@/components/ui/alert/Alert";
+import AlertModal from "@/components/example/ModalExample/ModalBasedAlerts";
 
 interface SelectOption {
     value: string;
@@ -176,6 +176,9 @@ export default function CreateLeadPage() {
                 title: 'Authentication Error', 
                 message: 'Could not find user information. Please log in again.' 
             });
+            setTimeout(() => {
+              router.push("/signin");
+          }, 2000);
         }
         return;
     }
@@ -254,11 +257,12 @@ export default function CreateLeadPage() {
       <LoadingOverlay isLoading={isLoading || isSaving} />
       {alertInfo && (
         <div className="fixed top-5 right-5 z-[10000] w-full max-w-sm">
-            <Alert 
-                variant={alertInfo.variant}
-                title={alertInfo.title}
-                message={alertInfo.message}
-                onClose={() => setAlertInfo(null)}
+            <AlertModal 
+              isOpen={!!alertInfo}
+              onClose={() => setAlertInfo(null)}
+              variant={alertInfo?.variant || 'info'}
+              title={alertInfo?.title || ''}
+              message={alertInfo?.message || ''}
             />
         </div>
       )}
@@ -266,7 +270,7 @@ export default function CreateLeadPage() {
         <PageBreadcrumb crumbs={breadcrumbs} />
         <div className="space-y-6">
           <form className="flex flex-col" noValidate onSubmit={(e) => { e.preventDefault(); handleSave() }}>
-            <ComponentCard title="Lead Information">
+            <ComponentCardInput title="Lead Information">
               <div className="px-2 pb-2">
                 <div className="col-span-2 lg:col-span-3 pb-6">
                     <ImageUpload
@@ -274,7 +278,7 @@ export default function CreateLeadPage() {
                       onChange={(file) => handleChange('photo', file)}
                     />
                 </div>
-                <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-3 p-3 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-4 shadow-md">          
+                <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-3 p-3 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 shadow-md">          
                   <div className="col-span-2 lg:col-span-1">
                     <Label>First Name</Label>
                     <Input type="text" placeholder="Enter first name" value={formData.firstName} onChange={(e) => handleChange("firstName", e.target.value)} />
@@ -337,11 +341,11 @@ export default function CreateLeadPage() {
                   </div>
                 </div>
               </div>
-            </ComponentCard>
+            </ComponentCardInput>
             <div className="pb-3"/>
-            <ComponentCard title="Sourcing Details">
+            <ComponentCardInput title="Sourcing Details">
               <div className="px-2 pb-3">
-                <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-3 p-3 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-4 shadow-md">      
+                <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-3 p-3 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 shadow-md">      
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Lead Source</Label>
                     <div className="relative">
@@ -375,7 +379,7 @@ export default function CreateLeadPage() {
                     {isSaving ? 'Saving...' : 'Save Lead'}
                 </Button>
               </div>
-            </ComponentCard>
+            </ComponentCardInput>
           </form>
         </div>
       </div>

@@ -1,13 +1,13 @@
 import React, { ReactNode, FC } from "react";
 
-interface ComponentCardProps {
+interface ComponentCardInputProps {
   title: string;
   children: React.ReactNode;
   className?: string;
   desc?: string;
 }
 
-const ComponentCard: FC<ComponentCardProps> = ({
+const ComponentCardInput: FC<ComponentCardInputProps> = ({
   title,
   children,
   className = "",
@@ -23,20 +23,20 @@ const ComponentCard: FC<ComponentCardProps> = ({
           <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
             {title}
           </h3>
-          {desc && (
+          {/* {desc && (
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {desc}
             </p>
-          )}
+          )} */}
         </div>
       )}
 
       {/* Card Body: Conditionally add top border if there is a title */}
-      <div className={`p-4 sm:p-6 ${title ? 'border-t border-gray-100 dark:border-gray-800' : ''}`}>
-        <div className="space-y-6">{children}</div>
+      <div className={`p-3 sm:p-5 ${title ? 'border-t border-gray-100 dark:border-gray-200' : ''}`}>
+        <div className="space-y-5">{children}</div>
       </div>
     </div>
   );
 };
 
-export default ComponentCard;
+export default ComponentCardInput;

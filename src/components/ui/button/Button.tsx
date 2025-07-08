@@ -8,7 +8,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   // React.ButtonHTMLAttributes, but keeping them here allows for specific defaults
   // or custom logic within this component.
   children: ReactNode; // Button text or content
-  size?: "sm" | "md" | "icon"; // Button size
+  size?: "sm" | "md" | "icon" | "xs"; // Button size
   variant?: "primary" | "outline" | "ghost"; // Button variant
   startIcon?: ReactNode; // Icon before the text
   endIcon?: ReactNode; // Icon after the text
@@ -34,7 +34,8 @@ const Button: FC<ButtonProps> = ({
   const sizeClasses = {
     sm: "px-4 py-3 text-sm",
     md: "px-5 py-3.5 text-sm",
-    icon: ""
+    icon: "",
+    xs: ""
   };
 
   // Variant Classes

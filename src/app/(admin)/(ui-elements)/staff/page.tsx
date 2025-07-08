@@ -1,26 +1,41 @@
+"use client";
+import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { Metadata } from "next";
-import React from "react";
+import React, { useState } from "react";
+import Button from "@/components/ui/button/Button";
+import Link from "next/link";
+import SearchComponent from "@/components/common/SearchComponent";
+import StaffTable from "@/components/tables/StaffTable";
 
-export const metadata: Metadata = {
-  title: "Next.js Blank Page | TailAdmin - Next.js Dashboard Template",
-  description: "This is Next.js Blank Page TailAdmin Dashboard Template",
-};
+const breadcrumbs = [
+    { name: "Home", href: "/" },
+    { name: "Staff", href: "/staff" }
+  ];
 
-export default function BlankPage() {
+export default function LeadsPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchType, setSearchType] = useState("staff_id");
+
+  const handleSearch = (query: string, type: string) => {
+    setSearchQuery(query);
+    setSearchType(type);
+  };
+  
   return (
     <div>
-      <PageBreadcrumb pageTitle="Staff Management" />
-      <div className="min-h-screen rounded-2xl border border-gray-200 bg-white px-5 py-7 dark:border-gray-800 dark:bg-white/[0.03] xl:px-10 xl:py-12">
-        <div className="mx-auto w-full max-w-[630px] text-center">
-          <h3 className="mb-4 font-semibold text-gray-800 text-theme-xl dark:text-white/90 sm:text-2xl">
-            Staff Management Page
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 sm:text-base">
-            Start putting content on grids or panels, you can also use different
-            combinations of grids.Please check out the dashboard and other pages
-          </p>
-        </div>
+      <PageBreadcrumb crumbs={breadcrumbs} />
+      <div className="space-y-6">
+        <ComponentCard title="">
+          <div className="flex items-center gap-3 justify-between">
+            <Link href="/staff/create" className="block w-full md:w-auto">
+              <Button size="md" variant="primary">
+                Add Staff +
+              </Button>
+            </Link>          
+            <SearchComponent onSearch={handleSearch} />
+          </div>
+          <StaffTable searchQuery={searchQuery} searchType={searchType} />
+        </ComponentCard>
       </div>
     </div>
   );

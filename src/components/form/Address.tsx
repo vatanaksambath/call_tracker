@@ -7,7 +7,7 @@ import Label from "@/components/form/Label";
 import api from "@/lib/api";
 import { formatApiDataForSelect } from "@/lib/utils";
 import { MapPinIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import ComponentCard from "../common/ComponentCard";
+import ComponentCardInput from "../common/ComponentCardInput";
 
 interface ISelectOption {
   value: string;
@@ -180,7 +180,7 @@ export default function Address({ value, onSave, error }: AddressProps) {
               </button>
             </div>
             <div className="mb-3 border-b border-gray-200 dark:border-gray-700" />
-            <ComponentCard title="address" className="shadow-md">
+            <ComponentCardInput title="Select Address Information" className="shadow-md">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>Province</Label>
@@ -242,7 +242,7 @@ export default function Address({ value, onSave, error }: AddressProps) {
                   />
                 </div>
               </div>
-            </ComponentCard>
+            </ComponentCardInput>
             <div className="mt-5 border-b border-gray-200 dark:border-gray-700 shadow-md" />
             <div className="flex justify-end gap-4 mt-6">
               <Button variant="outline" type="button" onClick={handleCancelClick}>
